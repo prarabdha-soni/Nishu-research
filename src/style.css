@@ -421,10 +421,10 @@ nav {
   border: 0.5px solid var(--color-border-tertiary);
   border-radius: 10px;
   padding: 22px;
-  cursor: pointer;
   transition: border-color 0.18s;
 }
-.more-card:hover { border-color: rgba(204, 120, 92, 0.4); }
+.more-card[data-prompt] { cursor: pointer; }
+.more-card[data-prompt]:hover { border-color: rgba(204, 120, 92, 0.4); }
 .more-tag {
   font-size: 10px;
   font-weight: 500;
