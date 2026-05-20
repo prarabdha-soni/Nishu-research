@@ -1,4 +1,5 @@
 import { renderBlocks, formatDate } from './renderer.js'
+import { smartParse } from './parser.js'
 
 const ADMIN_PW = 'bharatpulse'
 
@@ -425,6 +426,39 @@ function showToast(msg) {
   setTimeout(() => t.classList.add('admin-toast--show'), 10)
   setTimeout(() => { t.classList.remove('admin-toast--show'); setTimeout(() => t.remove(), 300) }, 2500)
 }
+
+// ── Smart Import ──────────────────────────────────────────────
+const smartToggle = document.getElementById('smart-import-toggle')
+const smartBody   = document.getElementById('smart-import-body')
+const smartChevron = document.getElementById('smart-chevron')
+
+smartToggle.addEventListener('click', () => {
+  const open = smartBody.style.display !== 'none'
+  smartBody.style.display = open ? 'none' : 'block'
+  smartChevron.textContent = open ? '▾' : '▴'
+})
+
+document.getElementById('smart-parse-btn').addEventListener('click', () => {
+  const text = document.getElementById('smart-textarea').value.trim()
+  if (!text) { showToast('Paste some text first'); return }
+
+  const parsed = smartParse(text)
+  if (parsed.length === 0) { showToast('Could not detect structure — try adding more text'); return }
+
+  blocks = parsed
+  renderBlocksList()
+
+  // Collapse smart import panel
+  smartBody.style.display = 'none'
+  smartChevron.textContent = '▾'
+
+  showToast(`Parsed ${parsed.length} blocks — review and edit below`)
+  document.getElementById('blocks-list').scrollIntoView({ behavior: 'smooth', block: 'start' })
+})
+
+document.getElementById('smart-clear-btn').addEventListener('click', () => {
+  document.getElementById('smart-textarea').value = ''
+})
 
 // ── Init ──────────────────────────────────────────────────────
 function initAdmin() {

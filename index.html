@@ -13,23 +13,36 @@
 
 <nav>
   <a class="nav-brand" href="/">Bharat<span>.</span>Pulse</a>
+  <div class="nav-search-wrap">
+    <svg class="nav-search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11"/></svg>
+    <input type="text" id="search-input" class="nav-search-input" placeholder="Search research…">
+  </div>
   <div class="nav-right">
     <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme"></button>
     <a class="nav-subscribe" href="#">Subscribe</a>
   </div>
 </nav>
 
-<!-- Hero: latest featured article -->
-<section class="home-hero" id="home-hero"></section>
-
-<!-- Archive grid -->
-<section class="archive-section" id="archive-section" style="display:none">
-  <div class="archive-header">
-    <span class="archive-title">All Research</span>
-    <span class="archive-count" id="archive-count"></span>
+<div class="home-masthead">
+  <div class="home-masthead-inner">
+    <div class="home-masthead-label">
+      <div class="issue-dot"></div>
+      <span>Independent Research · India &amp; Emerging Markets</span>
+    </div>
+    <div class="home-masthead-stats" id="home-stats"></div>
   </div>
-  <div class="articles-grid" id="articles-grid"></div>
-</section>
+</div>
+
+<div class="filter-bar" id="filter-bar">
+  <button class="filter-btn active" data-cat="all">All Research</button>
+</div>
+
+<main class="home-main">
+  <div class="home-grid" id="home-grid"></div>
+  <div class="home-empty" id="home-empty" style="display:none">
+    <p>No research found matching your search.</p>
+  </div>
+</main>
 
 <footer>
   <div class="footer-brand">Bharat<span>.</span>Pulse</div>
