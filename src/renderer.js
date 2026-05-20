@@ -15,12 +15,14 @@ function block(b) {
     case 'pullquote':
       return `<div class="pull-quote"><p>&ldquo;${esc(b.text)}&rdquo;</p></div>`
 
-    case 'stats':
-      return `<div class="data-callout">${b.cells.map(c => `
+    case 'stats': {
+      const cols = Math.min(b.cells.length || 3, 3)
+      return `<div class="data-callout" style="grid-template-columns:repeat(${cols},1fr)">${b.cells.map(c => `
         <div class="data-cell">
           <div class="data-num">${esc(c.num)}<span>${esc(c.unit)}</span></div>
           <div class="data-label">${esc(c.label)}</div>
         </div>`).join('')}</div>`
+    }
 
     case 'section':
       return `<div class="section-break">
