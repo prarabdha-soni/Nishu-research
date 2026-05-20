@@ -38,35 +38,77 @@ function getDrafts()         { return JSON.parse(localStorage.getItem('bp_drafts
 function saveLocalPublished(arr) { localStorage.setItem('bp_published', JSON.stringify(arr)) }
 function saveDrafts(arr)         { localStorage.setItem('bp_drafts',    JSON.stringify(arr)) }
 
-// ── Codebase API (dev server) ─────────────────────────────────
-async function apiPublish(art) {
+// ── Dev server API (local only) ───────────────────────────────
+async function devApiPublish(art) {
   try {
-    const r = await fetch('/api/articles', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(art)
-    })
+    const r = await fetch('/api/articles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(art) })
     return r.ok
   } catch { return false }
 }
-
-async function apiDelete(id) {
+async function devApiDelete(id) {
   try {
-    const r = await fetch('/api/articles', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    })
+    const r = await fetch('/api/articles', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     return r.ok
   } catch { return false }
 }
-
-async function apiGetPublished() {
-  try {
-    const r = await fetch('/api/articles')
-    if (r.ok) return await r.json()
-  } catch {}
+async function devApiGetPublished() {
+  try { const r = await fetch('/api/articles'); if (r.ok) return await r.json() } catch {}
   return null
+}
+
+// ── GitHub API ────────────────────────────────────────────────
+const GH_REPO = 'prarabdha-soni/Nishu-research'
+const GH_FILE = 'src/data/published.json'
+const GH_API  = `https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`
+
+function getGhToken() { return localStorage.getItem('bp_gh_token') || '' }
+function setGhToken(t) { t ? localStorage.setItem('bp_gh_token', t) : localStorage.removeItem('bp_gh_token') }
+
+function b64encode(str) { return btoa(unescape(encodeURIComponent(str))) }
+function b64decode(str) { try { return decodeURIComponent(escape(atob(str.replace(/\s/g, '')))) } catch { return atob(str.replace(/\s/g, '')) } }
+
+async function ghGetFile() {
+  const token = getGhToken()
+  if (!token) return null
+  try {
+    const r = await fetch(GH_API, { headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } })
+    if (!r.ok) return null
+    const d = await r.json()
+    return { articles: JSON.parse(b64decode(d.content)), sha: d.sha }
+  } catch { return null }
+}
+
+async function ghSave(articles, sha, message) {
+  const token = getGhToken()
+  if (!token) return false
+  try {
+    const r = await fetch(GH_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+      body: JSON.stringify({ message, content: b64encode(JSON.stringify(articles, null, 2)), sha })
+    })
+    return r.ok
+  } catch { return false }
+}
+
+async function ghPublish(art) {
+  const file = await ghGetFile()
+  if (!file) return false
+  const list = file.articles
+  const idx = list.findIndex(a => a.id === art.id)
+  if (idx >= 0) list[idx] = art; else list.unshift(art)
+  return ghSave(list, file.sha, `Publish: ${art.title}`)
+}
+
+async function ghDelete(id) {
+  const file = await ghGetFile()
+  if (!file) return false
+  return ghSave(file.articles.filter(a => a.id !== id), file.sha, `Delete article: ${id}`)
+}
+
+async function ghGetPublished() {
+  const file = await ghGetFile()
+  return file ? file.articles : null
 }
 
 // ── Block templates ───────────────────────────────────────────
@@ -352,17 +394,30 @@ document.getElementById('btn-publish').addEventListener('click', async () => {
   // Remove from drafts
   saveDrafts(getDrafts().filter(d => d.id !== id))
 
-  // Save to codebase via dev API; fall back to localStorage in production
-  const savedToCodebase = await apiPublish(art)
-  if (savedToCodebase) {
-    // Clean up any legacy localStorage copy
-    saveLocalPublished(getLocalPublished().filter(p => p.id !== id))
-    showToast('Saved to codebase — commit published.json to deploy')
-  } else {
+  // Try GitHub API first (works on deployed site); fall back to dev server, then localStorage
+  showToast('Publishing…')
+  let done = false
+  if (getGhToken()) {
+    done = await ghPublish(art)
+    if (done) {
+      saveLocalPublished(getLocalPublished().filter(p => p.id !== id))
+      showToast('Published to GitHub — site updates in ~1 min ✓')
+    } else {
+      showToast('GitHub error — check token in Settings')
+    }
+  }
+  if (!done) {
+    done = await devApiPublish(art)
+    if (done) {
+      saveLocalPublished(getLocalPublished().filter(p => p.id !== id))
+      showToast('Saved to codebase — commit published.json to deploy')
+    }
+  }
+  if (!done) {
     const local = getLocalPublished().filter(p => p.id !== id)
     local.unshift(art)
     saveLocalPublished(local)
-    showToast('Published locally — only visible in this browser')
+    showToast(getGhToken() ? 'GitHub failed — saved locally only' : 'Saved locally — add GitHub token in Settings for all-device sync')
   }
 
   document.getElementById('preview-open-link').href   = `article.html?id=${id}`
@@ -415,15 +470,18 @@ async function openDraftsModal() {
   draftsList.innerHTML = '<p class="drafts-empty" style="padding:24px">Loading…</p>'
   draftsModal.style.display = 'flex'
 
-  const drafts         = getDrafts()
-  const apiPub         = await apiGetPublished()
-  const localPub       = getLocalPublished()
-  // Codebase articles take precedence; show local-only ones that aren't already in codebase
-  const localOnly      = localPub.filter(a => !apiPub || !apiPub.some(p => p.id === a.id))
-  const published      = [...(apiPub || []), ...localOnly]
+  const drafts   = getDrafts()
+  const ghPub    = await ghGetPublished()
+  const devPub   = ghPub ? null : await devApiGetPublished()
+  const codePub  = ghPub || devPub  // GitHub takes precedence over dev server
+  const localPub = getLocalPublished()
+  const localOnly = localPub.filter(a => !codePub || !codePub.some(p => p.id === a.id))
+  const published = [...(codePub || []), ...localOnly]
 
   function row(art, status, source) {
-    const badge = source === 'codebase'
+    const badge = source === 'github'
+      ? `<span class="draft-status draft-status--published" title="Saved in GitHub repo">github</span>`
+      : source === 'codebase'
       ? `<span class="draft-status draft-status--published" title="Saved in codebase">codebase</span>`
       : `<span class="draft-status draft-status--${status}">${status}</span>`
     return `<div class="draft-row">
@@ -439,8 +497,9 @@ async function openDraftsModal() {
     </div>`
   }
 
+  const codeSource = ghPub ? 'github' : 'codebase'
   const rows = [
-    ...(apiPub || []).map(a => row(a, 'published', 'codebase')),
+    ...(codePub || []).map(a => row(a, 'published', codeSource)),
     ...localOnly.map(a => row(a, 'published', 'local')),
     ...drafts.map(a => row(a, 'draft', 'local')),
   ]
@@ -453,12 +512,13 @@ async function openDraftsModal() {
   draftsList.querySelectorAll('[data-delete]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!confirm('Delete this article?')) return
+      const aid = btn.dataset.delete
       if (btn.dataset.from === 'published') {
-        const deleted = await apiDelete(btn.dataset.delete)
-        if (!deleted) saveLocalPublished(getLocalPublished().filter(a => a.id !== btn.dataset.delete))
-        else saveLocalPublished(getLocalPublished().filter(a => a.id !== btn.dataset.delete))
+        if (getGhToken()) await ghDelete(aid)
+        else await devApiDelete(aid)
+        saveLocalPublished(getLocalPublished().filter(a => a.id !== aid))
       } else {
-        saveDrafts(getDrafts().filter(a => a.id !== btn.dataset.delete))
+        saveDrafts(getDrafts().filter(a => a.id !== aid))
       }
       openDraftsModal()
     })
@@ -479,6 +539,44 @@ function showToast(msg) {
   setTimeout(() => t.classList.add('admin-toast--show'), 10)
   setTimeout(() => { t.classList.remove('admin-toast--show'); setTimeout(() => t.remove(), 300) }, 2500)
 }
+
+// ── GitHub Settings ───────────────────────────────────────────
+const ghSettingsToggle = document.getElementById('gh-settings-toggle')
+const ghSettingsBody   = document.getElementById('gh-settings-body')
+const ghChevron        = document.getElementById('gh-chevron')
+const ghTokenInput     = document.getElementById('gh-token-input')
+const ghTokenStatus    = document.getElementById('gh-token-status')
+
+function updateGhStatus() {
+  const t = getGhToken()
+  ghTokenInput.value = t ? '••••••••••••••••' : ''
+  ghTokenStatus.textContent = t ? '✓ Token saved' : 'No token — articles save to this browser only'
+  ghTokenStatus.style.color = t ? 'var(--color-accent)' : 'var(--color-text-tertiary)'
+}
+
+ghSettingsToggle.addEventListener('click', () => {
+  const open = ghSettingsBody.style.display !== 'none'
+  ghSettingsBody.style.display = open ? 'none' : 'block'
+  ghChevron.textContent = open ? '▾' : '▴'
+  if (!open) { ghTokenInput.value = ''; updateGhStatus() }
+})
+
+document.getElementById('gh-token-save').addEventListener('click', () => {
+  const val = ghTokenInput.value.trim()
+  if (!val || val.startsWith('•')) { showToast('Paste a new token first'); return }
+  setGhToken(val)
+  updateGhStatus()
+  showToast('GitHub token saved')
+})
+
+document.getElementById('gh-token-clear').addEventListener('click', () => {
+  if (!confirm('Remove the GitHub token? Articles will save to this browser only.')) return
+  setGhToken('')
+  updateGhStatus()
+  showToast('Token removed')
+})
+
+updateGhStatus()
 
 // ── Smart Import ──────────────────────────────────────────────
 const smartToggle = document.getElementById('smart-import-toggle')
