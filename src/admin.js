@@ -3,6 +3,10 @@ import { smartParse } from './parser.js'
 
 const ADMIN_PW = 'bharatpulse'
 
+// ── State ─────────────────────────────────────────────────────
+let editingId = null   // null = new article, string = editing existing
+let blocks    = []
+
 // ── Auth ──────────────────────────────────────────────────────
 const authGate = document.getElementById('auth-gate')
 const adminApp = document.getElementById('admin-app')
@@ -28,10 +32,6 @@ document.getElementById('admin-logout').addEventListener('click', () => {
   sessionStorage.removeItem('bp_auth')
   location.reload()
 })
-
-// ── State ─────────────────────────────────────────────────────
-let editingId = null   // null = new article, string = editing existing
-let blocks    = []
 
 function getPublished() { return JSON.parse(localStorage.getItem('bp_published') || '[]') }
 function getDrafts()    { return JSON.parse(localStorage.getItem('bp_drafts')    || '[]') }
