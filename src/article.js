@@ -1,4 +1,5 @@
 import { articles as hardcoded } from './data/articles.js'
+import jsonPublished from './data/published.json'
 import { renderBlocks, formatDate } from './renderer.js'
 
 // ── Theme ─────────────────────────────────────────────────────
@@ -16,10 +17,11 @@ applyTheme(localStorage.getItem('bp-theme') || (matchMedia('(prefers-color-schem
 toggleBtn.addEventListener('click', () => applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'))
 
 // ── Load article ──────────────────────────────────────────────
-const id        = new URLSearchParams(location.search).get('id')
-const published = JSON.parse(localStorage.getItem('bp_published') || '[]')
-const drafts    = JSON.parse(localStorage.getItem('bp_drafts')    || '[]')
-const article   = [...hardcoded, ...published, ...drafts].find(a => a.id === id)
+const id           = new URLSearchParams(location.search).get('id')
+const localPublished = JSON.parse(localStorage.getItem('bp_published') || '[]')
+  .filter(a => !jsonPublished.some(p => p.id === a.id))
+const drafts       = JSON.parse(localStorage.getItem('bp_drafts') || '[]')
+const article      = [...hardcoded, ...jsonPublished, ...localPublished, ...drafts].find(a => a.id === id)
 
 const container = document.getElementById('article-root')
 

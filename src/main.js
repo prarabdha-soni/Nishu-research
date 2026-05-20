@@ -1,4 +1,5 @@
 import { articles as hardcoded } from './data/articles.js'
+import jsonPublished from './data/published.json'
 import { formatDate } from './renderer.js'
 
 // ── Theme ─────────────────────────────────────────────────────
@@ -17,8 +18,10 @@ toggleBtn.addEventListener('click', () => applyTheme(root.getAttribute('data-the
 
 // ── Data ──────────────────────────────────────────────────────
 function getAllArticles() {
-  const stored = JSON.parse(localStorage.getItem('bp_published') || '[]')
-  return [...hardcoded, ...stored].sort((a, b) => new Date(b.date) - new Date(a.date))
+  // jsonPublished = committed codebase articles; legacy = localStorage fallback for production
+  const legacy = JSON.parse(localStorage.getItem('bp_published') || '[]')
+    .filter(a => !jsonPublished.some(p => p.id === a.id))
+  return [...hardcoded, ...jsonPublished, ...legacy].sort((a, b) => new Date(b.date) - new Date(a.date))
 }
 
 const all = getAllArticles()

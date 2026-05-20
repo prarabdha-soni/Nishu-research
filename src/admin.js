@@ -33,10 +33,41 @@ document.getElementById('admin-logout').addEventListener('click', () => {
   location.reload()
 })
 
-function getPublished() { return JSON.parse(localStorage.getItem('bp_published') || '[]') }
-function getDrafts()    { return JSON.parse(localStorage.getItem('bp_drafts')    || '[]') }
-function savePublished(arr) { localStorage.setItem('bp_published', JSON.stringify(arr)) }
-function saveDrafts(arr)    { localStorage.setItem('bp_drafts',    JSON.stringify(arr)) }
+function getLocalPublished() { return JSON.parse(localStorage.getItem('bp_published') || '[]') }
+function getDrafts()         { return JSON.parse(localStorage.getItem('bp_drafts')    || '[]') }
+function saveLocalPublished(arr) { localStorage.setItem('bp_published', JSON.stringify(arr)) }
+function saveDrafts(arr)         { localStorage.setItem('bp_drafts',    JSON.stringify(arr)) }
+
+// ── Codebase API (dev server) ─────────────────────────────────
+async function apiPublish(art) {
+  try {
+    const r = await fetch('/api/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(art)
+    })
+    return r.ok
+  } catch { return false }
+}
+
+async function apiDelete(id) {
+  try {
+    const r = await fetch('/api/articles', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    return r.ok
+  } catch { return false }
+}
+
+async function apiGetPublished() {
+  try {
+    const r = await fetch('/api/articles')
+    if (r.ok) return await r.json()
+  } catch {}
+  return null
+}
 
 // ── Block templates ───────────────────────────────────────────
 const defaultBlock = {
@@ -309,25 +340,33 @@ document.getElementById('btn-save-draft').addEventListener('click', () => {
 })
 
 // ── Publish ───────────────────────────────────────────────────
-document.getElementById('btn-publish').addEventListener('click', () => {
+document.getElementById('btn-publish').addEventListener('click', async () => {
   const title = document.getElementById('f-title').value.trim()
   if (!title) { alert('Please add a title before publishing.'); return }
   if (!confirm(`Publish "${title}" to the site?`)) return
 
   const id  = editingId || generateId()
   const art = buildArticle(id)
-
-  // Move from drafts to published
-  const drafts    = getDrafts().filter(d => d.id !== id)
-  const published = getPublished().filter(p => p.id !== id)
-  published.unshift(art)
-  saveDrafts(drafts)
-  savePublished(published)
   editingId = id
+
+  // Remove from drafts
+  saveDrafts(getDrafts().filter(d => d.id !== id))
+
+  // Save to codebase via dev API; fall back to localStorage in production
+  const savedToCodebase = await apiPublish(art)
+  if (savedToCodebase) {
+    // Clean up any legacy localStorage copy
+    saveLocalPublished(getLocalPublished().filter(p => p.id !== id))
+    showToast('Saved to codebase — commit published.json to deploy')
+  } else {
+    const local = getLocalPublished().filter(p => p.id !== id)
+    local.unshift(art)
+    saveLocalPublished(local)
+    showToast('Published locally — only visible in this browser')
+  }
 
   document.getElementById('preview-open-link').href   = `article.html?id=${id}`
   document.getElementById('preview-open-link').style.display = 'inline'
-  showToast('Published! Visible on homepage.')
 })
 
 // ── Clear form ────────────────────────────────────────────────
@@ -372,14 +411,24 @@ const draftsModal  = document.getElementById('drafts-modal')
 const draftsClose  = document.getElementById('drafts-close')
 const draftsList   = document.getElementById('drafts-list-content')
 
-function openDraftsModal() {
-  const drafts    = getDrafts()
-  const published = getPublished()
+async function openDraftsModal() {
+  draftsList.innerHTML = '<p class="drafts-empty" style="padding:24px">Loading…</p>'
+  draftsModal.style.display = 'flex'
 
-  function row(art, status) {
+  const drafts         = getDrafts()
+  const apiPub         = await apiGetPublished()
+  const localPub       = getLocalPublished()
+  // Codebase articles take precedence; show local-only ones that aren't already in codebase
+  const localOnly      = localPub.filter(a => !apiPub || !apiPub.some(p => p.id === a.id))
+  const published      = [...(apiPub || []), ...localOnly]
+
+  function row(art, status, source) {
+    const badge = source === 'codebase'
+      ? `<span class="draft-status draft-status--published" title="Saved in codebase">codebase</span>`
+      : `<span class="draft-status draft-status--${status}">${status}</span>`
     return `<div class="draft-row">
       <div class="draft-row-info">
-        <span class="draft-status draft-status--${status}">${status}</span>
+        ${badge}
         <span class="draft-title">${art.title || '(untitled)'}</span>
         <span class="draft-date">${formatDate(art.date)}</span>
       </div>
@@ -391,25 +440,29 @@ function openDraftsModal() {
   }
 
   const rows = [
-    ...published.map(a => row(a, 'published')),
-    ...drafts.map(a => row(a, 'draft')),
+    ...(apiPub || []).map(a => row(a, 'published', 'codebase')),
+    ...localOnly.map(a => row(a, 'published', 'local')),
+    ...drafts.map(a => row(a, 'draft', 'local')),
   ]
   draftsList.innerHTML = rows.length ? rows.join('') : '<p class="drafts-empty">No saved drafts or published articles yet.</p>'
 
+  const all = [...published, ...drafts]
   draftsList.querySelectorAll('[data-load]').forEach(btn => {
-    const all = [...published, ...drafts]
     btn.addEventListener('click', () => loadArticle(all.find(a => a.id === btn.dataset.load)))
   })
   draftsList.querySelectorAll('[data-delete]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (!confirm('Delete this article?')) return
-      if (btn.dataset.from === 'published') savePublished(getPublished().filter(a => a.id !== btn.dataset.delete))
-      else saveDrafts(getDrafts().filter(a => a.id !== btn.dataset.delete))
+      if (btn.dataset.from === 'published') {
+        const deleted = await apiDelete(btn.dataset.delete)
+        if (!deleted) saveLocalPublished(getLocalPublished().filter(a => a.id !== btn.dataset.delete))
+        else saveLocalPublished(getLocalPublished().filter(a => a.id !== btn.dataset.delete))
+      } else {
+        saveDrafts(getDrafts().filter(a => a.id !== btn.dataset.delete))
+      }
       openDraftsModal()
     })
   })
-
-  draftsModal.style.display = 'flex'
 }
 function closeDraftsModal() { draftsModal.style.display = 'none' }
 
