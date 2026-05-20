@@ -24,7 +24,7 @@ function getAllArticles() {
 const all = getAllArticles()
 
 // ── Category filters ──────────────────────────────────────────
-const categories = ['all', ...new Set(all.map(a => a.category).filter(Boolean))]
+const categories = ['all', ...new Set(all.map(a => (a.category || '').trim()).filter(Boolean))]
 const filterBar  = document.getElementById('filter-bar')
 filterBar.innerHTML = categories.map(c =>
   `<button class="filter-btn${c === 'all' ? ' active' : ''}" data-cat="${c}">${c === 'all' ? 'All Research' : c}</button>`
@@ -72,7 +72,7 @@ function render() {
   const q       = searchQuery.toLowerCase()
 
   const filtered = all.filter(a => {
-    const matchCat    = activeCategory === 'all' || a.category === activeCategory
+    const matchCat    = activeCategory === 'all' || (a.category || '').trim() === activeCategory
     const matchSearch = !q || a.title.toLowerCase().includes(q) || a.subtitle.toLowerCase().includes(q) || (a.category || '').toLowerCase().includes(q)
     return matchCat && matchSearch
   })
