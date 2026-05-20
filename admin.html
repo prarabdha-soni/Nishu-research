@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Bharat.Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,300;1,8..60,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="/src/admin.css">
+</head>
+<body>
+
+<!-- Auth gate -->
+<div id="auth-gate" class="auth-gate">
+  <div class="auth-card">
+    <div class="auth-brand">Bharat<span>.</span>Pulse</div>
+    <p class="auth-label">Admin Access</p>
+    <input type="password" id="auth-input" class="auth-input" placeholder="Enter password" autocomplete="current-password">
+    <button id="auth-btn" class="auth-btn">Enter</button>
+    <p class="auth-error" id="auth-error"></p>
+  </div>
+</div>
+
+<!-- Admin app (hidden until auth) -->
+<div id="admin-app" class="admin-app" style="display:none">
+
+  <div class="admin-nav">
+    <a href="/" class="admin-brand">Bharat<span>.</span>Pulse</a>
+    <div class="admin-nav-right">
+      <a href="/" class="admin-nav-link">View Site &rarr;</a>
+      <button id="admin-logout" class="admin-logout">Logout</button>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+
+    <!-- Left: editor panel -->
+    <div class="editor-panel">
+
+      <div class="editor-header">
+        <h2 class="editor-title" id="editor-title-label">New Research</h2>
+        <div class="editor-header-actions">
+          <button class="btn-ghost" id="btn-clear">Clear</button>
+          <button class="btn-ghost" id="btn-drafts-list">All Drafts</button>
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="meta-section">
+        <div class="meta-row">
+          <div class="field-group">
+            <label class="field-label">Title</label>
+            <input type="text" id="f-title" class="field-input" placeholder="The Research Title">
+          </div>
+        </div>
+        <div class="meta-row">
+          <div class="field-group">
+            <label class="field-label">Subtitle / Thesis</label>
+            <input type="text" id="f-subtitle" class="field-input" placeholder="The one-line investment thesis">
+          </div>
+        </div>
+        <div class="meta-row meta-row--3">
+          <div class="field-group">
+            <label class="field-label">Category</label>
+            <input type="text" id="f-category" class="field-input" placeholder="e.g. Emerging Markets">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Issue No.</label>
+            <input type="text" id="f-issue" class="field-input field-input--sm" placeholder="02">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Read Time (min)</label>
+            <input type="number" id="f-readtime" class="field-input field-input--sm" placeholder="8" min="1">
+          </div>
+        </div>
+        <div class="meta-row meta-row--2">
+          <div class="field-group">
+            <label class="field-label">Author</label>
+            <input type="text" id="f-author" class="field-input" value="Prarabdha Soni">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Date</label>
+            <input type="date" id="f-date" class="field-input">
+          </div>
+        </div>
+      </div>
+
+      <!-- Content blocks -->
+      <div class="blocks-section">
+        <div class="blocks-header">
+          <span class="blocks-title">Content</span>
+          <div class="add-block-wrap">
+            <button class="btn-add-block" id="btn-add-block">+ Add Block</button>
+            <div class="block-menu" id="block-menu" style="display:none">
+              <button class="block-menu-item" data-type="paragraph">Paragraph</button>
+              <button class="block-menu-item" data-type="pullquote">Pull Quote</button>
+              <button class="block-menu-item" data-type="stats">Data Stats</button>
+              <button class="block-menu-item" data-type="section">Section Break</button>
+              <button class="block-menu-item" data-type="annotation">Annotation Box</button>
+              <button class="block-menu-item" data-type="timeline">Timeline</button>
+              <button class="block-menu-item" data-type="verdict">Verdict / Conclusion</button>
+            </div>
+          </div>
+        </div>
+        <div id="blocks-list" class="blocks-list"></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="editor-actions">
+        <button class="btn-secondary" id="btn-save-draft">Save Draft</button>
+        <button class="btn-primary" id="btn-publish">Publish to Site</button>
+      </div>
+
+    </div>
+
+    <!-- Right: preview panel -->
+    <div class="preview-panel">
+      <div class="preview-header">
+        <span class="preview-label">Live Preview</span>
+        <a id="preview-open-link" href="#" target="_blank" class="preview-open" style="display:none">Open article &rarr;</a>
+      </div>
+      <div class="preview-frame" id="preview-frame">
+        <div class="preview-empty">Start filling in the form to see a preview</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Drafts list modal -->
+<div id="drafts-modal" class="adm-modal" style="display:none">
+  <div class="adm-modal-backdrop"></div>
+  <div class="adm-modal-card">
+    <div class="adm-modal-header">
+      <span>Saved Drafts &amp; Published</span>
+      <button class="modal-close" id="drafts-close">&times;</button>
+    </div>
+    <div id="drafts-list-content"></div>
+  </div>
+</div>
+
+<script type="module" src="/src/admin.js"></script>
+</body>
+</html>
