@@ -1,6 +1,25 @@
-import { articles as hardcoded } from './data/articles.js'
-import jsonPublished from './data/published.json'
 import { renderBlocks, formatDate } from './renderer.js'
+
+function setMeta(name, content, prop = false) {
+  const attr = prop ? 'property' : 'name'
+  let el = document.querySelector(`meta[${attr}="${name}"]`)
+  if (!el) { el = document.createElement('meta'); el.setAttribute(attr, name); document.head.appendChild(el) }
+  el.setAttribute('content', content)
+}
+
+function esc(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+function buildTOC(blocks) {
+  const sections = blocks.filter(b => b.type === 'section' && b.heading)
+  if (sections.length < 2) return ''
+  const items = sections.map(b => {
+    const id = b.heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    return `<li><a href="#${id}">${b.num ? `<span class="toc-num">${esc(b.num)}</span> ` : ''}${esc(b.heading)}</a></li>`
+  }).join('')
+  return `<nav class="toc"><div class="toc-title">Contents</div><ol class="toc-list">${items}</ol></nav>`
+}
 
 // ── Theme ─────────────────────────────────────────────────────
 const MOON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/></svg>`
@@ -17,18 +36,44 @@ applyTheme(localStorage.getItem('bp-theme') || (matchMedia('(prefers-color-schem
 toggleBtn.addEventListener('click', () => applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'))
 
 // ── Load article ──────────────────────────────────────────────
-const id           = new URLSearchParams(location.search).get('id')
-const localPublished = JSON.parse(localStorage.getItem('bp_published') || '[]')
-  .filter(a => !jsonPublished.some(p => p.id === a.id))
-const drafts       = JSON.parse(localStorage.getItem('bp_drafts') || '[]')
-const article      = [...hardcoded, ...jsonPublished, ...localPublished, ...drafts].find(a => a.id === id)
-
+const id        = new URLSearchParams(location.search).get('id')
 const container = document.getElementById('article-root')
 
-if (!article) {
-  container.innerHTML = `<div class="not-found"><p>Research not found. <a href="/">← Go back</a></p></div>`
-} else {
-  document.title = `Bharat.Pulse — ${article.title}`
+async function loadArticle() {
+  if (!id) {
+    container.innerHTML = `<div class="not-found"><p>No article specified. <a href="/">← Go back</a></p></div>`
+    return
+  }
+
+  // Try API first, fall back to local drafts
+  let article = null
+  try {
+    const res = await fetch(`/api/articles/${id}`)
+    if (res.ok) article = await res.json()
+  } catch { /* offline or dev */ }
+
+  if (!article) {
+    const drafts = JSON.parse(localStorage.getItem('bp_drafts') || '[]')
+    article = drafts.find(a => a.id === id)
+  }
+
+  if (!article) {
+    container.innerHTML = `<div class="not-found"><p>Research not found. <a href="/">← Go back</a></p></div>`
+    return
+  }
+
+  {
+  document.title = `${article.title} — Bharat.Pulse`
+  setMeta('description', article.subtitle)
+  setMeta('og:title', article.title, true)
+  setMeta('og:description', article.subtitle, true)
+  setMeta('og:type', 'article', true)
+  setMeta('article:published_time', article.date, true)
+  setMeta('article:author', article.author, true)
+  setMeta('twitter:card', 'summary')
+  setMeta('twitter:title', article.title)
+  setMeta('twitter:description', article.subtitle)
+
   container.innerHTML = `
     <div class="masthead">
       <div class="issue-line">
@@ -50,6 +95,7 @@ if (!article) {
         </div>
       </div>
     </div>
+    ${buildTOC(article.blocks)}
     <div class="article-body">
       ${renderBlocks(article.blocks)}
     </div>`
@@ -86,4 +132,7 @@ if (!article) {
     modalCopy.textContent = 'Copied!'
     setTimeout(() => { modalCopy.textContent = 'Copy prompt' }, 1500)
   })
+  }
 }
+
+loadArticle()

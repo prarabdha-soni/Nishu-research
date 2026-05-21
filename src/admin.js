@@ -38,77 +38,34 @@ function getDrafts()         { return JSON.parse(localStorage.getItem('bp_drafts
 function saveLocalPublished(arr) { localStorage.setItem('bp_published', JSON.stringify(arr)) }
 function saveDrafts(arr)         { localStorage.setItem('bp_drafts',    JSON.stringify(arr)) }
 
-// ── Dev server API (local only) ───────────────────────────────
-async function devApiPublish(art) {
+// ── API helpers ───────────────────────────────────────────────
+function getApiKey() { return localStorage.getItem('bp_api_key') || '' }
+function setApiKey(k) { k ? localStorage.setItem('bp_api_key', k) : localStorage.removeItem('bp_api_key') }
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'x-api-key': getApiKey() }
+}
+
+async function apiPublish(art) {
   try {
-    const r = await fetch('/api/articles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(art) })
+    const r = await fetch('/api/articles', { method: 'POST', headers: authHeaders(), body: JSON.stringify(art) })
     return r.ok
   } catch { return false }
 }
-async function devApiDelete(id) {
+
+async function apiDelete(id) {
   try {
-    const r = await fetch('/api/articles', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    const r = await fetch(`/api/articles/${id}`, { method: 'DELETE', headers: authHeaders() })
     return r.ok
   } catch { return false }
 }
-async function devApiGetPublished() {
-  try { const r = await fetch('/api/articles'); if (r.ok) return await r.json() } catch {}
+
+async function apiGetPublished() {
+  try {
+    const r = await fetch('/api/articles?limit=100')
+    if (r.ok) { const d = await r.json(); return d.articles }
+  } catch {}
   return null
-}
-
-// ── GitHub API ────────────────────────────────────────────────
-const GH_REPO = 'prarabdha-soni/Nishu-research'
-const GH_FILE = 'src/data/published.json'
-const GH_API  = `https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`
-
-function getGhToken() { return localStorage.getItem('bp_gh_token') || '' }
-function setGhToken(t) { t ? localStorage.setItem('bp_gh_token', t) : localStorage.removeItem('bp_gh_token') }
-
-function b64encode(str) { return btoa(unescape(encodeURIComponent(str))) }
-function b64decode(str) { try { return decodeURIComponent(escape(atob(str.replace(/\s/g, '')))) } catch { return atob(str.replace(/\s/g, '')) } }
-
-async function ghGetFile() {
-  const token = getGhToken()
-  if (!token) return null
-  try {
-    const r = await fetch(GH_API, { headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } })
-    if (!r.ok) return null
-    const d = await r.json()
-    return { articles: JSON.parse(b64decode(d.content)), sha: d.sha }
-  } catch { return null }
-}
-
-async function ghSave(articles, sha, message) {
-  const token = getGhToken()
-  if (!token) return false
-  try {
-    const r = await fetch(GH_API, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
-      body: JSON.stringify({ message, content: b64encode(JSON.stringify(articles, null, 2)), sha })
-    })
-    return r.ok
-  } catch { return false }
-}
-
-async function ghPublish(art) {
-  const file = await ghGetFile()
-  if (!file) return false
-  const list = file.articles
-  const idx = list.findIndex(a => a.id === art.id)
-  if (idx >= 0) list[idx] = art; else list.unshift(art)
-  return ghSave(list, file.sha, `Publish: ${art.title}`)
-}
-
-async function ghDelete(id) {
-  const file = await ghGetFile()
-  if (!file) return false
-  return ghSave(file.articles.filter(a => a.id !== id), file.sha, `Delete article: ${id}`)
-}
-
-async function ghGetPublished() {
-  const file = await ghGetFile()
-  return file ? file.articles : null
 }
 
 // ── Block templates ───────────────────────────────────────────
@@ -124,6 +81,7 @@ const defaultBlock = {
   annotation: () => ({ type: 'annotation', title: '', text: '' }),
   timeline:   () => ({ type: 'timeline', items: [{ year: '', text: '' }] }),
   verdict:    () => ({ type: 'verdict', label: 'The bottom line', title: '', body: '', prompt: '' }),
+  image:      () => ({ type: 'image', src: '', alt: '', caption: '' }),
 }
 
 // ── Block form renderers ──────────────────────────────────────
@@ -199,6 +157,12 @@ function blockForm(b, idx) {
         <textarea class="blk-field blk-textarea" data-idx="${idx}" data-field="body" rows="4" placeholder="Conclusion body...">${b.body}</textarea>
         <input type="text" class="blk-field field-input" data-idx="${idx}" data-field="prompt" value="${b.prompt}" placeholder="Discussion prompt (optional)">`)
 
+    case 'image':
+      return wrap(`
+        <input type="url" class="blk-field field-input" data-idx="${idx}" data-field="src" value="${b.src}" placeholder="Image URL (https://…)">
+        <input type="text" class="blk-field field-input" data-idx="${idx}" data-field="alt" value="${b.alt}" placeholder="Alt text (describe the image for accessibility)">
+        <input type="text" class="blk-field field-input" data-idx="${idx}" data-field="caption" value="${b.caption}" placeholder="Caption (optional)">`)
+
     default: return wrap('')
   }
 }
@@ -210,6 +174,11 @@ function renderBlocksList() {
     ? `<div class="blocks-empty">No blocks yet. Click &ldquo;+ Add Block&rdquo; to start building.</div>`
     : blocks.map((b, i) => blockForm(b, i)).join('')
   attachBlockEvents()
+  // Auto-fill read time from word count if field is empty
+  const rtField = document.getElementById('f-readtime')
+  if (rtField && !rtField.value && blocks.length > 0) {
+    rtField.value = calcReadTime(blocks)
+  }
   updatePreview()
 }
 
@@ -362,17 +331,33 @@ function buildArticle(id) {
   }
 }
 
-function generateId() {
-  return 'article-' + Date.now()
+function generateId(title) {
+  const slug = (title || '').toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '').trim()
+    .replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 60)
+  const suffix = Date.now().toString(36).slice(-4)
+  return slug ? `${slug}-${suffix}` : `article-${suffix}`
+}
+
+function calcReadTime(blockList) {
+  const words = blockList.reduce((acc, b) => {
+    const texts = [b.text, b.body, b.heading, b.title]
+      .filter(Boolean)
+    if (b.items) b.items.forEach(i => texts.push(i.text))
+    if (b.cells) b.cells.forEach(c => texts.push(c.label))
+    return acc + texts.join(' ').split(/\s+/).filter(Boolean).length
+  }, 0)
+  return Math.max(1, Math.ceil(words / 200))
 }
 
 // ── Save draft ────────────────────────────────────────────────
 document.getElementById('btn-save-draft').addEventListener('click', () => {
-  if (!document.getElementById('f-title').value.trim()) {
+  const title = document.getElementById('f-title').value.trim()
+  if (!title) {
     alert('Please add a title before saving.')
     return
   }
-  const id  = editingId || generateId()
+  const id  = editingId || generateId(title)
   const art = buildArticle(id)
   const drafts = getDrafts().filter(d => d.id !== id)
   drafts.unshift(art)
@@ -387,37 +372,24 @@ document.getElementById('btn-publish').addEventListener('click', async () => {
   if (!title) { alert('Please add a title before publishing.'); return }
   if (!confirm(`Publish "${title}" to the site?`)) return
 
-  const id  = editingId || generateId()
+  const id  = editingId || generateId(title)
   const art = buildArticle(id)
   editingId = id
 
   // Remove from drafts
   saveDrafts(getDrafts().filter(d => d.id !== id))
 
-  // Try GitHub API first (works on deployed site); fall back to dev server, then localStorage
   showToast('Publishing…')
-  let done = false
-  if (getGhToken()) {
-    done = await ghPublish(art)
-    if (done) {
-      saveLocalPublished(getLocalPublished().filter(p => p.id !== id))
-      showToast('Published to GitHub — site updates in ~1 min ✓')
-    } else {
-      showToast('GitHub error — check token in Settings')
-    }
-  }
-  if (!done) {
-    done = await devApiPublish(art)
-    if (done) {
-      saveLocalPublished(getLocalPublished().filter(p => p.id !== id))
-      showToast('Saved to codebase — commit published.json to deploy')
-    }
-  }
-  if (!done) {
+  const done = await apiPublish(art)
+  if (done) {
+    saveLocalPublished(getLocalPublished().filter(p => p.id !== id))
+    showToast('Published ✓')
+  } else {
+    // Fallback: save locally if API unavailable
     const local = getLocalPublished().filter(p => p.id !== id)
     local.unshift(art)
     saveLocalPublished(local)
-    showToast(getGhToken() ? 'GitHub failed — saved locally only' : 'Saved locally — add GitHub token in Settings for all-device sync')
+    showToast(getApiKey() ? 'API error — saved locally only' : 'No API key — saved locally. Add key in Settings.')
   }
 
   document.getElementById('preview-open-link').href   = `article.html?id=${id}`
@@ -470,19 +442,17 @@ async function openDraftsModal() {
   draftsList.innerHTML = '<p class="drafts-empty" style="padding:24px">Loading…</p>'
   draftsModal.style.display = 'flex'
 
-  const drafts   = getDrafts()
-  const ghPub    = await ghGetPublished()
-  const devPub   = ghPub ? null : await devApiGetPublished()
-  const codePub  = ghPub || devPub  // GitHub takes precedence over dev server
-  const localPub = getLocalPublished()
-  const localOnly = localPub.filter(a => !codePub || !codePub.some(p => p.id === a.id))
-  const published = [...(codePub || []), ...localOnly]
+  const drafts    = getDrafts()
+  const apiPub    = await apiGetPublished()
+  const localPub  = getLocalPublished()
+  const localOnly = localPub.filter(a => !apiPub || !apiPub.some(p => p.id === a.id))
+  const published = [...(apiPub || []), ...localOnly]
 
   function row(art, status, source) {
-    const badge = source === 'github'
-      ? `<span class="draft-status draft-status--published" title="Saved in GitHub repo">github</span>`
-      : source === 'codebase'
-      ? `<span class="draft-status draft-status--published" title="Saved in codebase">codebase</span>`
+    const badge = source === 'db'
+      ? `<span class="draft-status draft-status--published" title="In MongoDB">published</span>`
+      : source === 'local'
+      ? `<span class="draft-status draft-status--published" title="Local only — API key needed to sync">local</span>`
       : `<span class="draft-status draft-status--${status}">${status}</span>`
     return `<div class="draft-row">
       <div class="draft-row-info">
@@ -497,9 +467,8 @@ async function openDraftsModal() {
     </div>`
   }
 
-  const codeSource = ghPub ? 'github' : 'codebase'
   const rows = [
-    ...(codePub || []).map(a => row(a, 'published', codeSource)),
+    ...(apiPub || []).map(a => row(a, 'published', 'db')),
     ...localOnly.map(a => row(a, 'published', 'local')),
     ...drafts.map(a => row(a, 'draft', 'local')),
   ]
@@ -514,8 +483,7 @@ async function openDraftsModal() {
       if (!confirm('Delete this article?')) return
       const aid = btn.dataset.delete
       if (btn.dataset.from === 'published') {
-        if (getGhToken()) await ghDelete(aid)
-        else await devApiDelete(aid)
+        await apiDelete(aid)
         saveLocalPublished(getLocalPublished().filter(a => a.id !== aid))
       } else {
         saveDrafts(getDrafts().filter(a => a.id !== aid))
@@ -540,43 +508,43 @@ function showToast(msg) {
   setTimeout(() => { t.classList.remove('admin-toast--show'); setTimeout(() => t.remove(), 300) }, 2500)
 }
 
-// ── GitHub Settings ───────────────────────────────────────────
-const ghSettingsToggle = document.getElementById('gh-settings-toggle')
-const ghSettingsBody   = document.getElementById('gh-settings-body')
-const ghChevron        = document.getElementById('gh-chevron')
-const ghTokenInput     = document.getElementById('gh-token-input')
-const ghTokenStatus    = document.getElementById('gh-token-status')
+// ── API Settings ──────────────────────────────────────────────
+const apiSettingsToggle = document.getElementById('gh-settings-toggle')
+const apiSettingsBody   = document.getElementById('gh-settings-body')
+const apiChevron        = document.getElementById('gh-chevron')
+const apiKeyInput       = document.getElementById('gh-token-input')
+const apiKeyStatus      = document.getElementById('gh-token-status')
 
-function updateGhStatus() {
-  const t = getGhToken()
-  ghTokenInput.value = t ? '••••••••••••••••' : ''
-  ghTokenStatus.textContent = t ? '✓ Token saved' : 'No token — articles save to this browser only'
-  ghTokenStatus.style.color = t ? 'var(--color-accent)' : 'var(--color-text-tertiary)'
+function updateApiStatus() {
+  const k = getApiKey()
+  apiKeyInput.value = k ? '••••••••••••••••' : ''
+  apiKeyStatus.textContent = k ? '✓ API key saved' : 'No key — articles save to this browser only'
+  apiKeyStatus.style.color = k ? 'var(--color-accent)' : 'var(--color-text-tertiary)'
 }
 
-ghSettingsToggle.addEventListener('click', () => {
-  const open = ghSettingsBody.style.display !== 'none'
-  ghSettingsBody.style.display = open ? 'none' : 'block'
-  ghChevron.textContent = open ? '▾' : '▴'
-  if (!open) { ghTokenInput.value = ''; updateGhStatus() }
+apiSettingsToggle.addEventListener('click', () => {
+  const open = apiSettingsBody.style.display !== 'none'
+  apiSettingsBody.style.display = open ? 'none' : 'block'
+  apiChevron.textContent = open ? '▾' : '▴'
+  if (!open) { apiKeyInput.value = ''; updateApiStatus() }
 })
 
 document.getElementById('gh-token-save').addEventListener('click', () => {
-  const val = ghTokenInput.value.trim()
-  if (!val || val.startsWith('•')) { showToast('Paste a new token first'); return }
-  setGhToken(val)
-  updateGhStatus()
-  showToast('GitHub token saved')
+  const val = apiKeyInput.value.trim()
+  if (!val || val.startsWith('•')) { showToast('Paste your API key first'); return }
+  setApiKey(val)
+  updateApiStatus()
+  showToast('API key saved')
 })
 
 document.getElementById('gh-token-clear').addEventListener('click', () => {
-  if (!confirm('Remove the GitHub token? Articles will save to this browser only.')) return
-  setGhToken('')
-  updateGhStatus()
-  showToast('Token removed')
+  if (!confirm('Remove the API key? Articles will save to this browser only.')) return
+  setApiKey('')
+  updateApiStatus()
+  showToast('API key removed')
 })
 
-updateGhStatus()
+updateApiStatus()
 
 // ── Smart Import ──────────────────────────────────────────────
 const smartToggle = document.getElementById('smart-import-toggle')
