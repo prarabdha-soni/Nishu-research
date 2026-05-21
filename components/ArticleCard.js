@@ -2,11 +2,16 @@ import Link from 'next/link'
 import { formatDate } from '@/lib/renderer'
 
 export default function ArticleCard({ article: a, featured }) {
+  const hasImage = Boolean(a.coverImage)
   return (
     <Link
       className={`art-card${featured ? ' art-card--featured' : ''}`}
       href={`/article/${a.id}`}
     >
+      <div
+        className={`art-card-img${hasImage ? '' : ' art-card-img--placeholder'}`}
+        style={hasImage ? { backgroundImage: `url(${a.coverImage})` } : undefined}
+      />
       <div className="art-card-top">
         <span className="art-cat">{a.category || ''}</span>
         <span className="art-issue">No.&thinsp;{String(a.issue).padStart(2, '0')}</span>

@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 import ThemeToggle from './ThemeToggle'
 import ArticleCard from './ArticleCard'
+import NewsletterSection from './NewsletterSection'
 import { formatDate } from '@/lib/renderer'
 
 const PAGE_SIZE = 12
@@ -49,6 +50,10 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
   const cats = ['all', ...categories.filter(Boolean).sort()]
   const hasMore = articles.length < total
 
+  // Separate hero (first article) from the grid
+  const heroArticle  = articles[0] || null
+  const gridArticles = articles.slice(1)
+
   return (
     <>
       <nav>
@@ -67,10 +72,11 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
         </div>
         <div className="nav-right">
           <ThemeToggle />
-          <a className="nav-subscribe" href="#">Subscribe</a>
+          <a className="nav-subscribe" href="#newsletter">Subscribe</a>
         </div>
       </nav>
 
+      {/* Publication label bar */}
       <div className="home-masthead">
         <div className="home-masthead-inner">
           <div className="home-masthead-label">
@@ -91,6 +97,32 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
         </div>
       </div>
 
+      {/* Hero — featured latest article */}
+      {heroArticle && (
+        <div className="hero">
+          <Link className="hero-card" href={`/article/${heroArticle.id}`}>
+            {heroArticle.coverImage && (
+              <div className="hero-bg" style={{ backgroundImage: `url(${heroArticle.coverImage})` }} />
+            )}
+            <div className="hero-gradient" />
+            <div className="hero-content">
+              <p className="hero-cat">{heroArticle.category || 'Research'}</p>
+              <h2 className="hero-title">{heroArticle.title}</h2>
+              <p className="hero-sub">{heroArticle.subtitle}</p>
+              <span className="hero-cta">
+                Read the research →
+              </span>
+            </div>
+          </Link>
+        </div>
+      )}
+
+      {/* Newsletter */}
+      <div id="newsletter">
+        <NewsletterSection />
+      </div>
+
+      {/* Filter bar */}
       <div className="filter-bar">
         {cats.map(c => (
           <button
@@ -108,8 +140,9 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
           <div className="home-empty"><p>No research found.</p></div>
         ) : (
           <div className="home-grid">
-            {articles.map((a, i) => (
-              <ArticleCard key={a.id || a._id} article={a} featured={i === 0} />
+            {/* Show hero card again in grid when searching/filtering, or show non-hero articles */}
+            {(activeCategory !== 'all' || searchQuery ? articles : gridArticles).map((a, i) => (
+              <ArticleCard key={a.id || a._id} article={a} featured={i === 0 && (activeCategory !== 'all' || !!searchQuery)} />
             ))}
             {loading && <div className="home-loading">Loading…</div>}
           </div>

@@ -260,7 +260,7 @@ function AdminApp() {
   const [blocks, setBlocks]       = useState([])
   const [meta, setMeta]           = useState({
     title: '', subtitle: '', category: '', issue: '', author: 'Prarabdha Soni',
-    date: today(), readTime: '',
+    date: today(), readTime: '', coverImage: '',
   })
   const [draftsOpen, setDraftsOpen]       = useState(false)
   const [blockMenuOpen, setBlockMenu]     = useState(false)
@@ -377,7 +377,7 @@ function AdminApp() {
     if (!confirm('Clear and start fresh?')) return
     setEditingId(null)
     setBlocks([])
-    setMeta({ title:'', subtitle:'', category:'', issue:'', author:'Prarabdha Soni', date: today(), readTime:'' })
+    setMeta({ title:'', subtitle:'', category:'', issue:'', author:'Prarabdha Soni', date: today(), readTime:'', coverImage:'' })
     setPublishedLink(null)
   }
 
@@ -385,13 +385,14 @@ function AdminApp() {
   function loadArticle(art) {
     setEditingId(art.id)
     setMeta({
-      title:    art.title    || '',
-      subtitle: art.subtitle || '',
-      category: art.category || '',
-      issue:    art.issue    || '',
-      author:   art.author   || 'Prarabdha Soni',
-      date:     art.date     || today(),
-      readTime: art.readTime || '',
+      title:      art.title      || '',
+      subtitle:   art.subtitle   || '',
+      category:   art.category   || '',
+      issue:      art.issue      || '',
+      author:     art.author     || 'Prarabdha Soni',
+      date:       art.date       || today(),
+      readTime:   art.readTime   || '',
+      coverImage: art.coverImage || '',
     })
     setBlocks(JSON.parse(JSON.stringify(art.blocks || [])))
     setPublishedLink(`/article/${art.id}`)
@@ -513,6 +514,13 @@ function AdminApp() {
                 <label className="field-label">Date</label>
                 <input type="date" className="field-input" value={meta.date}
                   onChange={e => setMeta(m => ({ ...m, date: e.target.value }))} />
+              </div>
+            </div>
+            <div className="meta-row">
+              <div className="field-group">
+                <label className="field-label">Cover Image URL</label>
+                <input type="url" className="field-input" placeholder="https://..." value={meta.coverImage}
+                  onChange={e => setMeta(m => ({ ...m, coverImage: e.target.value }))} />
               </div>
             </div>
           </div>

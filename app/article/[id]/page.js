@@ -4,6 +4,8 @@ import { connectDB, Article } from '@/lib/db'
 import { renderBlocks, buildTOC, formatDate } from '@/lib/renderer'
 import ThemeToggle from '@/components/ThemeToggle'
 import ArticleInteractive from '@/components/ArticleInteractive'
+import ShareBar from '@/components/ShareBar'
+import ArticleCard from '@/components/ArticleCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +35,12 @@ export default async function ArticlePage({ params }) {
   const blocksHtml = renderBlocks(article.blocks)
   const tocHtml    = buildTOC(article.blocks)
 
+  // Fetch related articles (same category, exclude current)
+  const related = await Article.find(
+    { category: article.category, id: { $ne: article.id }, status: 'published' },
+    'id title subtitle category issue author date readTime coverImage'
+  ).limit(3).lean()
+
   return (
     <>
       <ArticleInteractive />
@@ -42,7 +50,7 @@ export default async function ArticlePage({ params }) {
         <div className="nav-right">
           <Link className="nav-back" href="/">&larr; All Research</Link>
           <ThemeToggle />
-          <a className="nav-subscribe" href="#">Subscribe</a>
+          <a className="nav-subscribe" href="/#newsletter">Subscribe</a>
         </div>
       </nav>
 
@@ -68,6 +76,7 @@ export default async function ArticlePage({ params }) {
               <span className="meta-chip">{article.readTime} min read</span>
             </div>
           </div>
+          <ShareBar title={article.title} />
         </div>
 
         {tocHtml && <div dangerouslySetInnerHTML={{ __html: tocHtml }} />}
@@ -77,6 +86,34 @@ export default async function ArticlePage({ params }) {
           dangerouslySetInnerHTML={{ __html: blocksHtml }}
         />
       </div>
+
+      {/* Author bio */}
+      <div className="author-bio">
+        <div className="author-bio-inner">
+          <div className="author-bio-avatar">{article.author?.[0]}</div>
+          <div>
+            <div className="author-bio-name">{article.author}</div>
+            <div className="author-bio-role">Analyst, Bharat.Pulse</div>
+            <p className="author-bio-text">
+              Independent equity analyst focused on India and emerging markets.
+              Writes long-horizon, data-driven research on structural growth stories
+              that institutional coverage tends to underweight.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Related articles */}
+      {related.length > 0 && (
+        <section className="related-section">
+          <h3 className="related-heading">More from {article.category}</h3>
+          <div className="related-grid">
+            {related.map(a => (
+              <ArticleCard key={a.id} article={a} featured={false} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <footer>
         <div className="footer-brand">Bharat<span>.</span>Pulse</div>
