@@ -9,17 +9,17 @@ const inter = Inter({
 })
 
 export const metadata = {
-  title: 'Gloww — Future Research Lab',
+  title: 'Bharat Pulse — Future Research Lab',
   description: 'Researching structural shifts before markets fully understand them. Independent long-horizon research on AI, telecom, emerging markets, and civilizational change.',
   openGraph: {
     type: 'website',
-    siteName: 'Gloww',
-    title: 'Gloww — Future Research Lab',
+    siteName: 'Bharat Pulse',
+    title: 'Bharat Pulse — Future Research Lab',
     description: 'Researching structural shifts before markets fully understand them.',
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@glowwresearch',
+    site: '@bharatpulse',
   },
   alternates: {
     types: { 'application/rss+xml': '/feed.xml' },
@@ -30,11 +30,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
-        <link rel="alternate" type="application/rss+xml" title="Gloww Research Feed" href="/feed.xml" />
-        {/* Set dark theme immediately to prevent flash */}
-        <script dangerouslySetInnerHTML={{ __html: `document.documentElement.setAttribute('data-theme','dark')` }} />
+        <link rel="alternate" type="application/rss+xml" title="Bharat Pulse Research Feed" href="/feed.xml" />
       </head>
-      <body className="bg-g-bg text-g-text font-sans antialiased">{children}</body>
+      <body>{children}</body>
     </html>
   )
 }

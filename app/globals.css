@@ -3,31 +3,29 @@
 @tailwind utilities;
 
 /* ── Theme variables ─────────────────────────────────────────── */
-/* Default = dark (Gloww palette — always dark) */
 :root {
-  --color-background-primary:   #22201D;
-  --color-background-secondary: #2A2824;
-  --color-background-tertiary:  #171614;
-  --color-text-primary:   #F4EFE6;
-  --color-text-secondary: #B8B2A7;
-  --color-text-tertiary:  #6B6560;
-  --color-border-primary:   #3A3530;
-  --color-border-secondary: #302C28;
-  --color-border-tertiary:  #252220;
-  --accent: #FFB357;
+  --color-background-primary:   #ffffff;
+  --color-background-secondary: #faf8f5;
+  --color-background-tertiary:  #f3efe9;
+  --color-text-primary:   #0d0d0d;
+  --color-text-secondary: #1f1f1f;
+  --color-text-tertiary:  #5c5c5c;
+  --color-border-primary:   #ddd6cd;
+  --color-border-secondary: #e4ddd5;
+  --color-border-tertiary:  #ede8e2;
+  --accent: #CC785C;
 }
 
 [data-theme="dark"] {
-  --color-background-primary:   #22201D;
-  --color-background-secondary: #2A2824;
-  --color-background-tertiary:  #171614;
-  --color-text-primary:   #F4EFE6;
-  --color-text-secondary: #B8B2A7;
-  --color-text-tertiary:  #6B6560;
-  --color-border-primary:   #3A3530;
-  --color-border-secondary: #302C28;
-  --color-border-tertiary:  #252220;
-  --accent: #FFB357;
+  --color-background-primary:   #1a1714;
+  --color-background-secondary: #211e1a;
+  --color-background-tertiary:  #272320;
+  --color-text-primary:   #f0ece5;
+  --color-text-secondary: #b0aaa3;
+  --color-text-tertiary:  #6e6a64;
+  --color-border-primary:   #3a3530;
+  --color-border-secondary: #302b27;
+  --color-border-tertiary:  #2a2520;
 }
 
 /* ── Reset ───────────────────────────────────────────────────── */

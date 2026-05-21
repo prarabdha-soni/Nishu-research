@@ -35,7 +35,7 @@ export default function GlowFooter() {
               <div className="w-6 h-6 rounded-md bg-g-accent/20 border border-g-accent/30 flex items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-g-accent" />
               </div>
-              <span className="font-bold text-[17px] tracking-[-0.02em] text-g-text">gloww</span>
+              <span className="font-bold text-[17px] tracking-[-0.02em] text-g-text">Bharat Pulse</span>
             </div>
             <p className="text-g-faint text-[13.5px] font-light leading-relaxed max-w-xs mb-6">
               Researching structural shifts before markets fully understand them.
@@ -80,7 +80,7 @@ export default function GlowFooter() {
         {/* Divider */}
         <div className="border-t border-white/[0.06] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-g-faint text-[12.5px]">
-            © {new Date().getFullYear()} Gloww. Independent research.
+            © {new Date().getFullYear()} Bharat Pulse. Independent research.
           </p>
           <p className="text-g-faint text-[12px] italic">
             &ldquo;The Future Is The Biggest Multibagger.&rdquo;

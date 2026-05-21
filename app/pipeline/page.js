@@ -3,7 +3,7 @@ import { PIPELINE } from '@/lib/config'
 import ThemeToggle from '@/components/ThemeToggle'
 
 export const metadata = {
-  title: 'Research Pipeline — Gloww',
+  title: 'Research Pipeline — Bharat Pulse',
   description: 'Upcoming deep-dive research on AI, telecom, emerging markets, and civilizational change.',
 }
 
@@ -11,11 +11,11 @@ export default function PipelinePage() {
   return (
     <>
       <nav>
-        <Link className="nav-brand" href="/">gloww</Link>
+        <Link className="nav-brand" href="/">Bharat Pulse</Link>
         <div className="nav-right">
           <Link className="nav-back" href="/">&larr; All Research</Link>
           <ThemeToggle />
-          <a className="nav-subscribe" href="mailto:research@gloww.in?subject=Subscribe%20me">
+          <a className="nav-subscribe" href="mailto:research@bharatpulse.in?subject=Subscribe%20me">
             Subscribe
           </a>
         </div>
@@ -50,7 +50,7 @@ export default function PipelinePage() {
       </div>
 
       <footer>
-        <div className="footer-brand">gloww</div>
+        <div className="footer-brand">Bharat Pulse</div>
         <div className="footer-right">
           © {new Date().getFullYear()} Gloww. Independent research.
         </div>

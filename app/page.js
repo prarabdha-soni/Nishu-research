@@ -5,7 +5,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Gloww — Future Research Lab | The Future Is The Biggest Multibagger',
+  title: 'Bharat Pulse — Future Research Lab | The Future Is The Biggest Multibagger',
   description: 'Independent long-horizon research on AI, telecom, emerging markets, gold, and civilizational change.',
 }
 
@@ -26,11 +26,11 @@ export default async function HomePage() {
     <>
       {/* Nav — same structure as pipeline */}
       <nav>
-        <Link className="nav-brand" href="/">gloww</Link>
+        <Link className="nav-brand" href="/">Bharat Pulse</Link>
         <div className="nav-right">
           <Link className="nav-pipeline-link" href="/pipeline">Pipeline</Link>
           <ThemeToggle />
-          <a className="nav-subscribe" href="mailto:research@gloww.in?subject=Subscribe%20me">
+          <a className="nav-subscribe" href="mailto:research@bharatpulse.in?subject=Subscribe%20me">
             Subscribe
           </a>
         </div>
@@ -93,7 +93,7 @@ export default async function HomePage() {
 
       {/* Footer — same structure as pipeline */}
       <footer>
-        <div className="footer-brand">gloww</div>
+        <div className="footer-brand">Bharat Pulse</div>
         <div className="footer-right">
           © {new Date().getFullYear()} Gloww. Independent research.
         </div>

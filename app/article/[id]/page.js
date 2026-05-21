@@ -14,9 +14,9 @@ export const dynamic = 'force-dynamic'
 export async function generateMetadata({ params }) {
   await connectDB()
   const article = await Article.findOne({ id: params.id }, 'title subtitle date author').lean()
-  if (!article) return { title: 'Not Found — Gloww' }
+  if (!article) return { title: 'Not Found — Bharat Pulse' }
   return {
-    title: `${article.title} — Gloww`,
+    title: `${article.title} — Bharat Pulse`,
     description: article.subtitle,
     openGraph: {
       title: article.title,
@@ -60,7 +60,7 @@ export default async function ArticlePage({ params }) {
     author: { '@type': 'Person', name: article.author },
     publisher: {
       '@type': 'Organization',
-      name: 'Gloww',
+      name: 'Bharat Pulse',
       url: SITE_URL,
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/article/${article.id}` },
@@ -116,7 +116,7 @@ export default async function ArticlePage({ params }) {
           <div className="author-bio-avatar">{article.author?.[0]}</div>
           <div>
             <div className="author-bio-name">{article.author}</div>
-            <div className="author-bio-role">Analyst, Gloww Research</div>
+            <div className="author-bio-role">Analyst, Bharat Pulse</div>
             <p className="author-bio-text">
               Independent equity analyst focused on India and emerging markets.
               Writes long-horizon, data-driven research on structural growth stories
