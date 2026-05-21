@@ -3,20 +3,20 @@ import Link from 'next/link'
 import { connectDB, Article } from '@/lib/db'
 import { renderBlocks, buildTOC, formatDate } from '@/lib/renderer'
 import { SITE_URL } from '@/lib/config'
-import ThemeToggle from '@/components/ThemeToggle'
 import ArticleInteractive from '@/components/ArticleInteractive'
 import ShareBar from '@/components/ShareBar'
 import ArticleCard from '@/components/ArticleCard'
-import Footer from '@/components/Footer'
+import GlowNav from '@/components/GlowNav'
+import GlowFooter from '@/components/GlowFooter'
 
 export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }) {
   await connectDB()
   const article = await Article.findOne({ id: params.id }, 'title subtitle date author').lean()
-  if (!article) return { title: 'Not Found — Bharat.Pulse' }
+  if (!article) return { title: 'Not Found — Gloww' }
   return {
-    title: `${article.title} — Bharat.Pulse`,
+    title: `${article.title} — Gloww`,
     description: article.subtitle,
     openGraph: {
       title: article.title,
@@ -60,7 +60,7 @@ export default async function ArticlePage({ params }) {
     author: { '@type': 'Person', name: article.author },
     publisher: {
       '@type': 'Organization',
-      name: 'Bharat.Pulse',
+      name: 'Gloww',
       url: SITE_URL,
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/article/${article.id}` },
@@ -75,18 +75,9 @@ export default async function ArticlePage({ params }) {
       />
 
       <ArticleInteractive />
+      <GlowNav />
 
-      <nav>
-        <Link className="nav-brand" href="/">Bharat<span>.</span>Pulse</Link>
-        <div className="nav-right">
-          <Link className="nav-back" href="/">&larr; All Research</Link>
-          <Link className="nav-pipeline-link" href="/pipeline">Pipeline</Link>
-          <ThemeToggle />
-          <a className="nav-subscribe" href="/#newsletter">Subscribe</a>
-        </div>
-      </nav>
-
-      <div id="article-root">
+      <div id="article-root" className="bg-g-bg min-h-screen">
         <div className="masthead">
           <div className="issue-line">
             <div className="issue-dot" />
@@ -125,7 +116,7 @@ export default async function ArticlePage({ params }) {
           <div className="author-bio-avatar">{article.author?.[0]}</div>
           <div>
             <div className="author-bio-name">{article.author}</div>
-            <div className="author-bio-role">Analyst, Bharat.Pulse</div>
+            <div className="author-bio-role">Analyst, Gloww Research</div>
             <p className="author-bio-text">
               Independent equity analyst focused on India and emerging markets.
               Writes long-horizon, data-driven research on structural growth stories
@@ -169,7 +160,7 @@ export default async function ArticlePage({ params }) {
         </section>
       )}
 
-      <Footer />
+      <GlowFooter />
     </>
   )
 }
