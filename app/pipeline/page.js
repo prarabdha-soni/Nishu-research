@@ -1,23 +1,23 @@
 import Link from 'next/link'
 import { PIPELINE } from '@/lib/config'
 import ThemeToggle from '@/components/ThemeToggle'
-import NewsletterSection from '@/components/NewsletterSection'
-import Footer from '@/components/Footer'
 
 export const metadata = {
-  title: 'Research Pipeline — Bharat.Pulse',
-  description: 'Upcoming deep-dive research on India and emerging markets. Subscribe to get notified when each piece publishes.',
+  title: 'Research Pipeline — Gloww',
+  description: 'Upcoming deep-dive research on AI, telecom, emerging markets, and civilizational change.',
 }
 
 export default function PipelinePage() {
   return (
     <>
       <nav>
-        <Link className="nav-brand" href="/">Bharat<span>.</span>Pulse</Link>
+        <Link className="nav-brand" href="/">gloww</Link>
         <div className="nav-right">
           <Link className="nav-back" href="/">&larr; All Research</Link>
           <ThemeToggle />
-          <a className="nav-subscribe" href="/#newsletter">Subscribe</a>
+          <a className="nav-subscribe" href="mailto:research@gloww.in?subject=Subscribe%20me">
+            Subscribe
+          </a>
         </div>
       </nav>
 
@@ -28,7 +28,7 @@ export default function PipelinePage() {
         </div>
         <h1 className="pipeline-title">What&apos;s Coming Next</h1>
         <p className="pipeline-desc">
-          Deep-dives currently in progress. Subscribe below to get notified the moment each piece publishes.
+          Deep-dives currently in progress. Subscribe to get notified the moment each piece publishes.
         </p>
       </div>
 
@@ -49,11 +49,12 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      <div id="newsletter">
-        <NewsletterSection />
-      </div>
-
-      <Footer />
+      <footer>
+        <div className="footer-brand">gloww</div>
+        <div className="footer-right">
+          © {new Date().getFullYear()} Gloww. Independent research.
+        </div>
+      </footer>
     </>
   )
 }
