@@ -4,6 +4,8 @@ import Link from 'next/link'
 import ThemeToggle from './ThemeToggle'
 import ArticleCard from './ArticleCard'
 import NewsletterSection from './NewsletterSection'
+import HomepageAuthorBio from './HomepageAuthorBio'
+import Footer from './Footer'
 import { formatDate } from '@/lib/renderer'
 
 const PAGE_SIZE = 12
@@ -15,7 +17,7 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
   const [activeCategory, setCategory] = useState('all')
   const [searchQuery, setSearch]      = useState('')
   const [loading, setLoading]         = useState(false)
-  const [page, setPage]               = useState(2) // next page to fetch
+  const [page, setPage]               = useState(2)
   const searchTimeout                 = useRef(null)
 
   async function fetchArticles({ reset = false, category = activeCategory, q = searchQuery, nextPage = page } = {}) {
@@ -50,7 +52,6 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
   const cats = ['all', ...categories.filter(Boolean).sort()]
   const hasMore = articles.length < total
 
-  // Separate hero (first article) from the grid
   const heroArticle  = articles[0] || null
   const gridArticles = articles.slice(1)
 
@@ -71,6 +72,7 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
           />
         </div>
         <div className="nav-right">
+          <Link className="nav-pipeline-link" href="/pipeline">Pipeline</Link>
           <ThemeToggle />
           <a className="nav-subscribe" href="#newsletter">Subscribe</a>
         </div>
@@ -97,7 +99,7 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
         </div>
       </div>
 
-      {/* Hero — featured latest article */}
+      {/* Hero */}
       {heroArticle && (
         <div className="hero">
           <Link className="hero-card" href={`/article/${heroArticle.id}`}>
@@ -109,18 +111,17 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
               <p className="hero-cat">{heroArticle.category || 'Research'}</p>
               <h2 className="hero-title">{heroArticle.title}</h2>
               <p className="hero-sub">{heroArticle.subtitle}</p>
-              <span className="hero-cta">
-                Read the research →
-              </span>
+              <span className="hero-cta">Read the research →</span>
             </div>
           </Link>
         </div>
       )}
 
-      {/* Newsletter */}
+      {/* Newsletter + author bio (tasks 3, 4) */}
       <div id="newsletter">
         <NewsletterSection />
       </div>
+      <HomepageAuthorBio />
 
       {/* Filter bar */}
       <div className="filter-bar">
@@ -140,7 +141,6 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
           <div className="home-empty"><p>No research found.</p></div>
         ) : (
           <div className="home-grid">
-            {/* Show hero card again in grid when searching/filtering, or show non-hero articles */}
             {(activeCategory !== 'all' || searchQuery ? articles : gridArticles).map((a, i) => (
               <ArticleCard key={a.id || a._id} article={a} featured={i === 0 && (activeCategory !== 'all' || !!searchQuery)} />
             ))}
@@ -157,10 +157,7 @@ export default function HomepageShell({ initialArticles, initialTotal, initialCa
         )}
       </main>
 
-      <footer>
-        <div className="footer-brand">Bharat<span>.</span>Pulse</div>
-        <div className="footer-right">Independent &middot; Long-horizon &middot; Data-driven</div>
-      </footer>
+      <Footer />
     </>
   )
 }

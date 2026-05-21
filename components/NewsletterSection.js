@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { SUBSCRIBER_COUNT } from '@/lib/config'
 
 export default function NewsletterSection() {
   const [email, setEmail]     = useState('')
@@ -8,7 +9,6 @@ export default function NewsletterSection() {
   function handleSubmit(e) {
     e.preventDefault()
     if (!email.trim()) return
-    // Open mailto — no backend required
     window.open(
       `mailto:research@bharatpulse.in?subject=Subscribe%20me&body=Please%20add%20me%20to%20the%20newsletter%3A%20${encodeURIComponent(email)}`,
       '_blank'
@@ -40,6 +40,8 @@ export default function NewsletterSection() {
             <button className="newsletter-btn" type="submit">Subscribe</button>
           </form>
         )}
+        {/* Task 3: subscriber social proof — update SUBSCRIBER_COUNT in lib/config.js */}
+        <p className="newsletter-social-proof">Join {SUBSCRIBER_COUNT} long-term investors.</p>
         <p className="newsletter-note">No spam. Unsubscribe any time.</p>
       </div>
     </section>

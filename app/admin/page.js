@@ -40,6 +40,7 @@ const defaultBlock = {
   timeline:   () => ({ type: 'timeline', items: [{ year:'', text:'' }] }),
   verdict:    () => ({ type: 'verdict', label:'The bottom line', title:'', body:'', prompt:'' }),
   image:      () => ({ type: 'image', src:'', alt:'', caption:'' }),
+  footnote:   () => ({ type: 'footnote', items: [''] }),
 }
 
 function setDeep(obj, path, value) {
@@ -88,7 +89,7 @@ function useToast() {
 }
 
 // ── Block form ────────────────────────────────────────────────
-function BlockItem({ block: b, idx, onUpdate, onDelete, onMoveUp, onMoveDown, onAddTlItem, onDelTlItem }) {
+function BlockItem({ block: b, idx, onUpdate, onDelete, onMoveUp, onMoveDown, onAddTlItem, onDelTlItem, onAddFnItem, onDelFnItem }) {
   const field = (path) => ({
     value: (() => {
       const parts = path.split('.')
@@ -176,6 +177,21 @@ function BlockItem({ block: b, idx, onUpdate, onDelete, onMoveUp, onMoveDown, on
       <input type="url" className="blk-field field-input" placeholder="Image URL (https://…)" {...field('src')} />
       <input type="text" className="blk-field field-input" placeholder="Alt text" {...field('alt')} />
       <input type="text" className="blk-field field-input" placeholder="Caption (optional)" {...field('caption')} />
+    </>)
+
+    case 'footnote': return wrap(<>
+      <p style={{ fontSize:11.5, color:'var(--color-text-tertiary)', marginBottom:10, lineHeight:1.6 }}>
+        Use <code style={{ fontFamily:'monospace', background:'var(--color-background-tertiary)', padding:'1px 4px', borderRadius:3 }}>[^1]</code>, <code style={{ fontFamily:'monospace', background:'var(--color-background-tertiary)', padding:'1px 4px', borderRadius:3 }}>[^2]</code> etc. inside paragraph text to cite these sources.
+      </p>
+      {b.items.map((item, ii) => (
+        <div key={ii} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6 }}>
+          <span style={{ color:'var(--accent)', fontSize:12, minWidth:24, flexShrink:0, fontFamily:'monospace' }}>[^{ii+1}]</span>
+          <input type="text" className="blk-field field-input" placeholder="Source text or URL…"
+            value={item} onChange={e => onUpdate(idx, `items.${ii}`, e.target.value)} />
+          <button className="blk-btn blk-del" onClick={() => onDelFnItem(idx, ii)}>×</button>
+        </div>
+      ))}
+      <button className="btn-ghost btn-sm" style={{ marginTop:4 }} onClick={() => onAddFnItem(idx)}>+ Add source</button>
     </>)
 
     default: return wrap(null)
@@ -316,6 +332,22 @@ function AdminApp() {
   }
 
   function delTlItem(idx, ii) {
+    setBlocks(prev => {
+      const a = JSON.parse(JSON.stringify(prev))
+      a[idx].items.splice(ii, 1)
+      return a
+    })
+  }
+
+  function addFnItem(idx) {
+    setBlocks(prev => {
+      const a = JSON.parse(JSON.stringify(prev))
+      a[idx].items.push('')
+      return a
+    })
+  }
+
+  function delFnItem(idx, ii) {
     setBlocks(prev => {
       const a = JSON.parse(JSON.stringify(prev))
       a[idx].items.splice(ii, 1)
@@ -550,7 +582,8 @@ function AdminApp() {
                   <BlockItem key={i} block={b} idx={i}
                     onUpdate={updateBlock} onDelete={deleteBlock}
                     onMoveUp={moveUp} onMoveDown={moveDown}
-                    onAddTlItem={addTlItem} onDelTlItem={delTlItem} />
+                    onAddTlItem={addTlItem} onDelTlItem={delTlItem}
+                    onAddFnItem={addFnItem} onDelFnItem={delFnItem} />
                 ))
               }
             </div>

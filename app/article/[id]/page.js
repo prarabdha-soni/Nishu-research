@@ -2,10 +2,12 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { connectDB, Article } from '@/lib/db'
 import { renderBlocks, buildTOC, formatDate } from '@/lib/renderer'
+import { SITE_URL } from '@/lib/config'
 import ThemeToggle from '@/components/ThemeToggle'
 import ArticleInteractive from '@/components/ArticleInteractive'
 import ShareBar from '@/components/ShareBar'
 import ArticleCard from '@/components/ArticleCard'
+import Footer from '@/components/Footer'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +25,7 @@ export async function generateMetadata({ params }) {
       publishedTime: article.date,
       authors: [article.author],
     },
-    twitter: { card: 'summary', title: article.title, description: article.subtitle },
+    twitter: { card: 'summary_large_image', title: article.title, description: article.subtitle },
   }
 }
 
@@ -35,20 +37,50 @@ export default async function ArticlePage({ params }) {
   const blocksHtml = renderBlocks(article.blocks)
   const tocHtml    = buildTOC(article.blocks)
 
-  // Fetch related articles (same category, exclude current)
+  // Related articles (same category, up to 3)
   const related = await Article.find(
     { category: article.category, id: { $ne: article.id }, status: 'published' },
     'id title subtitle category issue author date readTime coverImage'
   ).limit(3).lean()
 
+  // Read Next: most recent article regardless of category
+  const nextArticle = await Article.findOne(
+    { id: { $ne: article.id }, status: 'published' },
+    'id title subtitle category issue author date readTime coverImage'
+  ).sort({ date: -1 }).lean()
+
+  // JSON-LD structured data (task 6)
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.subtitle,
+    datePublished: article.date,
+    dateModified: article.updatedAt || article.date,
+    author: { '@type': 'Person', name: article.author },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Bharat.Pulse',
+      url: SITE_URL,
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/article/${article.id}` },
+  }
+
   return (
     <>
+      {/* JSON-LD (task 6) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <ArticleInteractive />
 
       <nav>
         <Link className="nav-brand" href="/">Bharat<span>.</span>Pulse</Link>
         <div className="nav-right">
           <Link className="nav-back" href="/">&larr; All Research</Link>
+          <Link className="nav-pipeline-link" href="/pipeline">Pipeline</Link>
           <ThemeToggle />
           <a className="nav-subscribe" href="/#newsletter">Subscribe</a>
         </div>
@@ -103,7 +135,29 @@ export default async function ArticlePage({ params }) {
         </div>
       </div>
 
-      {/* Related articles */}
+      {/* Read Next (task 5) */}
+      <div className="read-next-section">
+        <div className="read-next-label">Read Next</div>
+        {nextArticle ? (
+          <Link className="read-next-card" href={`/article/${nextArticle.id}`}>
+            {nextArticle.coverImage && (
+              <div className="read-next-img" style={{ backgroundImage: `url(${nextArticle.coverImage})` }} />
+            )}
+            <div className="read-next-body">
+              <span className="read-next-cat">{nextArticle.category}</span>
+              <h3 className="read-next-title">{nextArticle.title}</h3>
+              <p className="read-next-sub">{nextArticle.subtitle}</p>
+              <div className="read-next-meta">
+                {nextArticle.author} &middot; {nextArticle.readTime} min read
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <p className="read-next-empty">More research coming soon. <a href="/#newsletter">Subscribe</a> to be notified.</p>
+        )}
+      </div>
+
+      {/* Related articles (same category) */}
       {related.length > 0 && (
         <section className="related-section">
           <h3 className="related-heading">More from {article.category}</h3>
@@ -115,10 +169,7 @@ export default async function ArticlePage({ params }) {
         </section>
       )}
 
-      <footer>
-        <div className="footer-brand">Bharat<span>.</span>Pulse</div>
-        <div className="footer-right">Independent &middot; Long-horizon &middot; Data-driven</div>
-      </footer>
+      <Footer />
     </>
   )
 }

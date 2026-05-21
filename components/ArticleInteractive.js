@@ -16,10 +16,11 @@ export default function ArticleInteractive() {
     }
     window.addEventListener('scroll', onScroll, { passive: true })
 
-    // Wire up verdict prompt buttons (rendered via dangerouslySetInnerHTML)
+    // Wire up verdict prompt links (rendered via dangerouslySetInnerHTML)
+    // preventDefault stops the mailto fallback when JS is active
     const onClick = (e) => {
       const btn = e.target.closest('[data-prompt]')
-      if (btn) setModalText(btn.dataset.prompt)
+      if (btn) { e.preventDefault(); setModalText(btn.dataset.prompt) }
     }
     document.addEventListener('click', onClick)
 
