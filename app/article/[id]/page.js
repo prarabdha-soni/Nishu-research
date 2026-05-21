@@ -5,9 +5,8 @@ import { renderBlocks, buildTOC, formatDate } from '@/lib/renderer'
 import { SITE_URL } from '@/lib/config'
 import ArticleInteractive from '@/components/ArticleInteractive'
 import ShareBar from '@/components/ShareBar'
-import ArticleCard from '@/components/ArticleCard'
-import GlowNav from '@/components/GlowNav'
-import GlowFooter from '@/components/GlowFooter'
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,19 +36,18 @@ export default async function ArticlePage({ params }) {
   const blocksHtml = renderBlocks(article.blocks)
   const tocHtml    = buildTOC(article.blocks)
 
-  // Related articles (same category, up to 3)
-  const related = await Article.find(
-    { category: article.category, id: { $ne: article.id }, status: 'published' },
-    'id title subtitle category issue author date readTime coverImage'
-  ).limit(3).lean()
+  // Next + Prev articles for section navigation
+  const [nextArticle, prevArticle] = await Promise.all([
+    Article.findOne(
+      { id: { $ne: article.id }, status: 'published', date: { $lt: article.date } },
+      'id title category'
+    ).sort({ date: -1 }).lean(),
+    Article.findOne(
+      { id: { $ne: article.id }, status: 'published', date: { $gt: article.date } },
+      'id title category'
+    ).sort({ date: 1 }).lean(),
+  ])
 
-  // Read Next: most recent article regardless of category
-  const nextArticle = await Article.findOne(
-    { id: { $ne: article.id }, status: 'published' },
-    'id title subtitle category issue author date readTime coverImage'
-  ).sort({ date: -1 }).lean()
-
-  // JSON-LD structured data (task 6)
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -58,52 +56,74 @@ export default async function ArticlePage({ params }) {
     datePublished: article.date,
     dateModified: article.updatedAt || article.date,
     author: { '@type': 'Person', name: article.author },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Bharat Pulse',
-      url: SITE_URL,
-    },
+    publisher: { '@type': 'Organization', name: 'Bharat Pulse', url: SITE_URL },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/article/${article.id}` },
   }
 
   return (
-    <>
-      {/* JSON-LD (task 6) */}
+    <div className="min-h-screen bg-stone-50 font-sans">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
       <ArticleInteractive />
-      <GlowNav />
+      <SiteNav showBack backLabel="All Research" backHref="/" />
 
-      <div id="article-root" className="bg-g-bg min-h-screen">
-        <div className="masthead">
-          <div className="issue-line">
-            <div className="issue-dot" />
-            <span className="issue-text">
-              {article.category} &mdash; Issue No. {String(article.issue).padStart(2, '0')}
-            </span>
-            <div className="issue-rule" />
-          </div>
-          <h1 className="cover-title">{article.title}</h1>
-          <p className="cover-sub">{article.subtitle}</p>
-          <div className="byline">
-            <div className="avatar">{article.author?.[0]}</div>
-            <div>
-              <div className="byline-name">{article.author}</div>
-              <div className="byline-role">Independent Research</div>
-            </div>
-            <div className="byline-meta">
-              <span className="meta-chip">{formatDate(article.date)}</span>
-              <span className="meta-chip">{article.readTime} min read</span>
-            </div>
-          </div>
-          <ShareBar title={article.title} />
+      {/* Article masthead */}
+      <div className="max-w-3xl mx-auto px-6 pt-12 pb-0">
+
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-[11.5px] text-stone-400 mb-6">
+          <Link href="/" className="hover:text-stone-700 transition-colors duration-150">Home</Link>
+          <span>/</span>
+          <span className="text-[#CC785C] font-medium">{article.category}</span>
         </div>
 
-        {tocHtml && <div dangerouslySetInnerHTML={{ __html: tocHtml }} />}
+        {/* Issue line */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#CC785C]" />
+          <span className="text-[10.5px] font-semibold tracking-[0.18em] uppercase text-stone-400">
+            {article.category} &mdash; Issue No.&thinsp;{String(article.issue || '01').padStart(2, '0')}
+          </span>
+        </div>
 
+        {/* Title */}
+        <h1 className="text-3xl md:text-[2.8rem] font-bold text-stone-900 tracking-[-0.03em] leading-[1.12] mb-4">
+          {article.title}
+        </h1>
+        <p className="text-stone-500 text-[18px] font-light italic leading-relaxed mb-8">
+          {article.subtitle}
+        </p>
+
+        {/* Byline */}
+        <div className="flex items-center gap-4 py-5 border-t border-b border-stone-200 mb-8">
+          <div className="w-9 h-9 rounded-full bg-[#CC785C] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+            {article.author?.[0]}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-stone-800">{article.author}</div>
+            <div className="text-[12px] text-stone-400">Independent Research</div>
+          </div>
+          <div className="flex items-center gap-4 text-[12px] text-stone-400 flex-shrink-0">
+            <span>{formatDate(article.date)}</span>
+            <span className="hidden sm:block">·</span>
+            <span className="hidden sm:block">{article.readTime} min read</span>
+          </div>
+        </div>
+
+        <ShareBar title={article.title} />
+      </div>
+
+      {/* TOC */}
+      {tocHtml && (
+        <div className="max-w-3xl mx-auto px-6 my-6">
+          <div dangerouslySetInnerHTML={{ __html: tocHtml }} />
+        </div>
+      )}
+
+      {/* Article body */}
+      <div id="article-root">
         <div
           className="article-body"
           dangerouslySetInnerHTML={{ __html: blocksHtml }}
@@ -111,13 +131,15 @@ export default async function ArticlePage({ params }) {
       </div>
 
       {/* Author bio */}
-      <div className="author-bio">
-        <div className="author-bio-inner">
-          <div className="author-bio-avatar">{article.author?.[0]}</div>
+      <div className="max-w-3xl mx-auto px-6 mt-12">
+        <div className="flex gap-5 items-start p-6 bg-white rounded-2xl border border-stone-200">
+          <div className="w-12 h-12 rounded-full bg-[#CC785C] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+            {article.author?.[0]}
+          </div>
           <div>
-            <div className="author-bio-name">{article.author}</div>
-            <div className="author-bio-role">Analyst, Bharat Pulse</div>
-            <p className="author-bio-text">
+            <div className="font-semibold text-stone-900 text-[15px] mb-0.5">{article.author}</div>
+            <div className="text-[11.5px] text-[#CC785C] font-medium mb-2">Analyst, Bharat Pulse</div>
+            <p className="text-stone-500 text-[13.5px] font-light leading-relaxed">
               Independent equity analyst focused on India and emerging markets.
               Writes long-horizon, data-driven research on structural growth stories
               that institutional coverage tends to underweight.
@@ -126,41 +148,54 @@ export default async function ArticlePage({ params }) {
         </div>
       </div>
 
-      {/* Read Next (task 5) */}
-      <div className="read-next-section">
-        <div className="read-next-label">Read Next</div>
-        {nextArticle ? (
-          <Link className="read-next-card" href={`/article/${nextArticle.id}`}>
-            {nextArticle.coverImage && (
-              <div className="read-next-img" style={{ backgroundImage: `url(${nextArticle.coverImage})` }} />
-            )}
-            <div className="read-next-body">
-              <span className="read-next-cat">{nextArticle.category}</span>
-              <h3 className="read-next-title">{nextArticle.title}</h3>
-              <p className="read-next-sub">{nextArticle.subtitle}</p>
-              <div className="read-next-meta">
-                {nextArticle.author} &middot; {nextArticle.readTime} min read
-              </div>
-            </div>
-          </Link>
-        ) : (
-          <p className="read-next-empty">More research coming soon. <a href="/#newsletter">Subscribe</a> to be notified.</p>
-        )}
-      </div>
+      {/* Prev / Next article navigation */}
+      {(prevArticle || nextArticle) && (
+        <div className="max-w-3xl mx-auto px-6 mt-8 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-      {/* Related articles (same category) */}
-      {related.length > 0 && (
-        <section className="related-section">
-          <h3 className="related-heading">More from {article.category}</h3>
-          <div className="related-grid">
-            {related.map(a => (
-              <ArticleCard key={a.id} article={a} featured={false} />
-            ))}
+            {/* Prev (older) */}
+            {nextArticle ? (
+              <Link
+                href={`/article/${nextArticle.id}`}
+                className="group flex flex-col gap-1.5 p-5 bg-white border border-stone-200 rounded-xl hover:border-[#CC785C]/40 hover:bg-stone-50 transition-all duration-150"
+              >
+                <div className="flex items-center gap-1.5 text-stone-400 text-[11px] font-medium">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="group-hover:-translate-x-0.5 transition-transform duration-150">
+                    <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Previous
+                </div>
+                <span className="text-stone-700 text-[14px] font-medium leading-snug tracking-tight line-clamp-2 group-hover:text-[#CC785C] transition-colors duration-150">
+                  {nextArticle.title}
+                </span>
+                <span className="text-[11px] text-stone-400">{nextArticle.category}</span>
+              </Link>
+            ) : <div />}
+
+            {/* Next (newer) */}
+            {prevArticle ? (
+              <Link
+                href={`/article/${prevArticle.id}`}
+                className="group flex flex-col gap-1.5 p-5 bg-white border border-stone-200 rounded-xl hover:border-[#CC785C]/40 hover:bg-stone-50 transition-all duration-150 sm:text-right"
+              >
+                <div className="flex items-center gap-1.5 text-stone-400 text-[11px] font-medium sm:justify-end">
+                  Next
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="group-hover:translate-x-0.5 transition-transform duration-150">
+                    <path d="M3 8h10M8.5 4l4.5 4-4.5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <span className="text-stone-700 text-[14px] font-medium leading-snug tracking-tight line-clamp-2 group-hover:text-[#CC785C] transition-colors duration-150">
+                  {prevArticle.title}
+                </span>
+                <span className="text-[11px] text-stone-400">{prevArticle.category}</span>
+              </Link>
+            ) : <div />}
+
           </div>
-        </section>
+        </div>
       )}
 
-      <GlowFooter />
-    </>
+      <SiteFooter />
+    </div>
   )
 }

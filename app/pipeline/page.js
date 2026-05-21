@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import { PIPELINE } from '@/lib/config'
-import ThemeToggle from '@/components/ThemeToggle'
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata = {
   title: 'Research Pipeline — Bharat Pulse',
@@ -9,52 +9,56 @@ export const metadata = {
 
 export default function PipelinePage() {
   return (
-    <>
-      <nav>
-        <Link className="nav-brand" href="/">Bharat Pulse</Link>
-        <div className="nav-right">
-          <Link className="nav-back" href="/">&larr; All Research</Link>
-          <ThemeToggle />
-          <a className="nav-subscribe" href="mailto:research@bharatpulse.in?subject=Subscribe%20me">
-            Subscribe
-          </a>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-stone-50 font-sans">
+      <SiteNav showBack backLabel="All Research" backHref="/" />
 
-      <div className="pipeline-masthead">
-        <div className="pipeline-eyebrow">
-          <div className="issue-dot" />
-          <span>Research Pipeline</span>
-        </div>
-        <h1 className="pipeline-title">What&apos;s Coming Next</h1>
-        <p className="pipeline-desc">
+      {/* Masthead */}
+      <div className="max-w-5xl mx-auto px-6 pt-14 pb-10">
+        <p className="text-[#CC785C] text-[10.5px] font-semibold tracking-[0.2em] uppercase mb-4">
+          Research Pipeline
+        </p>
+        <h1 className="text-4xl md:text-[3.2rem] font-bold text-stone-900 tracking-[-0.03em] leading-tight mb-4">
+          What&apos;s Coming Next
+        </h1>
+        <p className="text-stone-500 text-[16px] font-light leading-relaxed max-w-xl">
           Deep-dives currently in progress. Subscribe to get notified the moment each piece publishes.
         </p>
       </div>
 
-      <div className="pipeline-grid-wrap">
-        <div className="pipeline-grid">
+      {/* Pipeline cards */}
+      <div className="max-w-5xl mx-auto px-6 pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-stone-200 rounded-2xl overflow-hidden border border-stone-200 shadow-sm">
           {PIPELINE.map((item, i) => (
-            <div key={i} className="pipeline-card">
-              <div className="pipeline-card-top">
-                <span className="pipeline-cat">{item.category}</span>
-                <span className={`pipeline-badge${item.badge !== 'Coming Soon' ? ' pipeline-badge--dated' : ''}`}>
+            <div key={i} className="bg-white hover:bg-stone-50 transition-colors duration-150 p-8 flex flex-col gap-3">
+              {/* Top: category + badge */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-semibold tracking-[0.16em] uppercase text-stone-400">
+                  {item.category}
+                </span>
+                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${
+                  item.badge === 'Coming Soon'
+                    ? 'bg-[#CC785C]/10 text-[#CC785C]'
+                    : 'bg-emerald-50 text-emerald-600'
+                }`}>
                   {item.badge}
                 </span>
               </div>
-              <h2 className="pipeline-name">{item.name}</h2>
-              <p className="pipeline-teaser">{item.teaser}</p>
+
+              {/* Title */}
+              <h2 className="text-[18px] md:text-[19px] font-semibold text-stone-900 leading-snug tracking-[-0.02em]">
+                {item.name}
+              </h2>
+
+              {/* Teaser */}
+              <p className="text-stone-500 text-[13.5px] font-light leading-relaxed">
+                {item.teaser}
+              </p>
             </div>
           ))}
         </div>
       </div>
 
-      <footer>
-        <div className="footer-brand">Bharat Pulse</div>
-        <div className="footer-right">
-          © {new Date().getFullYear()} Gloww. Independent research.
-        </div>
-      </footer>
-    </>
+      <SiteFooter />
+    </div>
   )
 }
