@@ -388,16 +388,18 @@ function AdminApp() {
 
     showToast('Publishing…')
     try {
+      const key = getApiKey() || ADMIN_PW
       const r = await fetch('/api/articles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': getApiKey() },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': key },
         body: JSON.stringify(art),
       })
       if (r.ok) {
         setPublishedLink(`/article/${id}`)
         showToast('Published ✓')
       } else {
-        showToast(getApiKey() ? 'API error — check key' : 'No API key in Settings')
+        const err = await r.json().catch(() => ({}))
+        showToast(err.error || 'Publish failed — check API key in Settings')
       }
     } catch {
       showToast('Network error — check connection')
