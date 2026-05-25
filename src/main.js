@@ -42,24 +42,17 @@ loadMoreWrap.style.display = 'none'
 function renderCard(a, featured) {
   const img = a.coverImage
     ? `<div class="art-card-img"><img src="${a.coverImage}" alt="${a.title}" loading="lazy"></div>`
-    : `<div class="art-card-img art-card-img--placeholder"></div>`
+    : ''
   return `
     <a class="art-card${featured ? ' art-card--featured' : ''}" href="article.html?id=${a.id}">
+      <h2 class="art-title">${a.title}</h2>
       ${img}
-      <div class="art-card-body">
-        <div class="art-card-top">
-          <span class="art-cat">${a.category || ''}</span>
-          <span class="art-issue">No.&thinsp;${String(a.issue).padStart(2,'0')}</span>
-        </div>
-        <h2 class="art-title">${a.title}</h2>
-        <p class="art-sub">${a.subtitle}</p>
-        <div class="art-footer">
-          <span class="art-author">${a.author}</span>
-          <span class="art-sep">&middot;</span>
-          <span>${formatDate(a.date)}</span>
-          <span class="art-sep">&middot;</span>
-          <span>${a.readTime} min read</span>
-        </div>
+      <p class="art-sub">${a.subtitle}</p>
+      <div class="art-footer">
+        <span class="art-date">${formatDate(a.date)}</span>
+        ${a.category ? `<span class="art-sep">&middot;</span><span class="art-cat">${a.category}</span>` : ''}
+        <span class="art-sep">&middot;</span>
+        <span>${a.readTime} min read</span>
       </div>
     </a>`
 }
