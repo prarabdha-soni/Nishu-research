@@ -142,6 +142,7 @@
   color: var(--color-text-tertiary);
 }
 .field-label--inline { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.field-required { color: var(--accent); font-size: 11px; }
 .field-input {
   width: 100%;
   padding: 9px 12px;

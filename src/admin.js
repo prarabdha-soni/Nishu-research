@@ -246,13 +246,14 @@ function attachBlockEvents() {
 // ── Live preview ──────────────────────────────────────────────
 function getMeta() {
   return {
-    title:    document.getElementById('f-title').value,
-    subtitle: document.getElementById('f-subtitle').value,
-    category: document.getElementById('f-category').value,
-    issue:    document.getElementById('f-issue').value || '00',
-    author:   document.getElementById('f-author').value,
-    date:     document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
-    readTime: document.getElementById('f-readtime').value || '5',
+    title:      document.getElementById('f-title').value,
+    subtitle:   document.getElementById('f-subtitle').value,
+    category:   document.getElementById('f-category').value,
+    issue:      document.getElementById('f-issue').value || '00',
+    author:     document.getElementById('f-author').value,
+    date:       document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
+    readTime:   document.getElementById('f-readtime').value || '5',
+    coverImage: document.getElementById('f-coverimage').value.trim(),
   }
 }
 
@@ -292,7 +293,7 @@ function updatePreview() {
 }
 
 // Live preview on metadata change
-['f-title','f-subtitle','f-category','f-issue','f-author','f-date','f-readtime'].forEach(id => {
+['f-title','f-subtitle','f-coverimage','f-category','f-issue','f-author','f-date','f-readtime'].forEach(id => {
   document.getElementById(id)?.addEventListener('input', updatePreview)
   document.getElementById(id)?.addEventListener('change', updatePreview)
 })
@@ -320,13 +321,14 @@ function buildArticle(id) {
   const m = getMeta()
   return {
     id,
-    issue:    m.issue,
-    category: m.category,
-    title:    m.title,
-    subtitle: m.subtitle,
-    author:   m.author,
-    date:     m.date,
-    readTime: m.readTime,
+    issue:      m.issue,
+    category:   m.category,
+    title:      m.title,
+    subtitle:   m.subtitle,
+    author:     m.author,
+    date:       m.date,
+    readTime:   m.readTime,
+    coverImage: m.coverImage,
     blocks:   JSON.parse(JSON.stringify(blocks)),
   }
 }
@@ -370,6 +372,8 @@ document.getElementById('btn-save-draft').addEventListener('click', () => {
 document.getElementById('btn-publish').addEventListener('click', async () => {
   const title = document.getElementById('f-title').value.trim()
   if (!title) { alert('Please add a title before publishing.'); return }
+  const coverImage = document.getElementById('f-coverimage').value.trim()
+  if (!coverImage) { alert('Please add a cover image URL before publishing.'); return }
   if (!confirm(`Publish "${title}" to the site?`)) return
 
   const id  = editingId || generateId(title)
@@ -405,7 +409,7 @@ document.getElementById('btn-clear').addEventListener('click', () => {
 function clearForm() {
   editingId = null
   blocks    = []
-  ;['f-title','f-subtitle','f-category','f-issue','f-readtime'].forEach(id => {
+  ;['f-title','f-subtitle','f-coverimage','f-category','f-issue','f-readtime'].forEach(id => {
     document.getElementById(id).value = ''
   })
   document.getElementById('f-author').value = 'Prarabdha Soni'
@@ -418,13 +422,14 @@ function clearForm() {
 // ── Load article into editor ──────────────────────────────────
 function loadArticle(art) {
   editingId = art.id
-  document.getElementById('f-title').value    = art.title || ''
-  document.getElementById('f-subtitle').value = art.subtitle || ''
-  document.getElementById('f-category').value = art.category || ''
-  document.getElementById('f-issue').value    = art.issue || ''
-  document.getElementById('f-author').value   = art.author || 'Prarabdha Soni'
-  document.getElementById('f-date').value     = art.date || new Date().toISOString().slice(0,10)
-  document.getElementById('f-readtime').value = art.readTime || ''
+  document.getElementById('f-title').value      = art.title || ''
+  document.getElementById('f-subtitle').value   = art.subtitle || ''
+  document.getElementById('f-coverimage').value = art.coverImage || ''
+  document.getElementById('f-category').value   = art.category || ''
+  document.getElementById('f-issue').value      = art.issue || ''
+  document.getElementById('f-author').value     = art.author || 'Prarabdha Soni'
+  document.getElementById('f-date').value       = art.date || new Date().toISOString().slice(0,10)
+  document.getElementById('f-readtime').value   = art.readTime || ''
   document.getElementById('editor-title-label').textContent = `Editing: ${art.title}`
   blocks = JSON.parse(JSON.stringify(art.blocks || []))
   renderBlocksList()
