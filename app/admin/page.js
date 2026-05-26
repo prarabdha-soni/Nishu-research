@@ -208,13 +208,24 @@ function DraftsModal({ onClose, onLoad }) {
       const drafts = getDrafts()
       let published = []
       try {
-        const r = await fetch('/api/articles?limit=100')
-        if (r.ok) { const d = await r.json(); published = d.articles || [] }
-      } catch {}
-      setAllItems([...published, ...drafts])
+        const r = await fetch('/api/articles?limit=200&status=all')
+        if (r.ok) {
+          const d = await r.json()
+          published = d.articles || []
+        } else {
+          const err = await r.json().catch(() => ({}))
+          console.warn('Admin fetch failed:', err.error)
+        }
+      } catch (e) {
+        console.warn('Admin fetch error:', e.message)
+      }
+      // Deduplicate: DB wins over localStorage if same id
+      const dbIds = new Set(published.map(a => a.id))
+      const localOnly = drafts.filter(d => !dbIds.has(d.id))
+      setAllItems([...published, ...localOnly])
       setRows([
-        ...published.map(a => ({ art: a, status: 'published', source: 'db' })),
-        ...drafts.map(a => ({ art: a, status: 'draft', source: 'local' })),
+        ...published.map(a => ({ art: a, status: a.status || 'published', source: 'db' })),
+        ...localOnly.map(a => ({ art: a, status: 'draft', source: 'local' })),
       ])
     }
     load()

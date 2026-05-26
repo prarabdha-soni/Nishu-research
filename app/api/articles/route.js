@@ -15,7 +15,8 @@ export async function GET(request) {
   const q        = searchParams.get('q')
   const status   = searchParams.get('status') || 'published'
 
-  const filter = { status }
+  const filter = {}
+  if (status !== 'all') filter.status = status
   if (category && category !== 'all') filter.category = category
   if (q) {
     const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
