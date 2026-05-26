@@ -30,11 +30,12 @@
 /* ── Base ────────────────────────────────────────────────────── */
 body {
   font-family: 'DM Sans', sans-serif;
-  background: var(--color-background-tertiary);
+  background: var(--color-background-primary);
   color: var(--color-text-primary);
   min-height: 100vh;
   transition: background-color 0.2s, color 0.2s;
 }
+.page-home { background: var(--color-background-tertiary); }
 
 /* ── Nav ─────────────────────────────────────────────────────── */
 nav {
@@ -193,6 +194,44 @@ nav {
 .byline-role { font-size: 12px; color: var(--color-text-tertiary); }
 .byline-meta { margin-left: auto; display: flex; gap: 18px; }
 .meta-chip { font-size: 12px; color: var(--color-text-tertiary); letter-spacing: 0.2px; }
+
+/* ── Share bar ───────────────────────────────────────────────── */
+.art-share {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 14px 52px;
+  border-top: 1px solid var(--color-border-tertiary);
+  border-bottom: 1px solid var(--color-border-tertiary);
+}
+.art-share-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-right: 4px;
+}
+.art-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--color-text-secondary);
+  background: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.art-share-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ── Article body ────────────────────────────────────────────── */
 .article-body {
@@ -846,8 +885,9 @@ footer {
   .nav-back { display: none; }
   .nav-subscribe { display: none; }
 
-  .masthead     { padding: 48px 24px 0; }
-  .article-body { padding: 0 24px 64px; }
+  .masthead      { padding: 48px 24px 0; }
+  .art-share     { padding: 12px 24px; }
+  .article-body  { padding: 0 24px 64px; }
 
   .pull-quote  { margin: 36px 0; padding: 24px 28px; }
   .verdict-box { margin: 36px 0 0; padding: 28px 28px; }
@@ -876,6 +916,7 @@ footer {
   .art-card--featured .art-card-img img { height: 220px; }
 
   .masthead     { padding: 32px 16px 0; }
+  .art-share    { padding: 10px 16px; }
   .article-body { padding: 0 16px 48px; }
   .issue-text   { font-size: 10px; letter-spacing: 1px; }
 
