@@ -5,14 +5,14 @@
 /* ── Theme variables ─────────────────────────────────────────── */
 :root {
   --color-background-primary:   #ffffff;
-  --color-background-secondary: #faf8f5;
-  --color-background-tertiary:  #f3efe9;
-  --color-text-primary:   #0d0d0d;
-  --color-text-secondary: #1f1f1f;
-  --color-text-tertiary:  #5c5c5c;
-  --color-border-primary:   #ddd6cd;
-  --color-border-secondary: #e4ddd5;
-  --color-border-tertiary:  #ede8e2;
+  --color-background-secondary: #f5f5f5;
+  --color-background-tertiary:  #ebebeb;
+  --color-text-primary:   #1a1a1a;
+  --color-text-secondary: #333333;
+  --color-text-tertiary:  #888888;
+  --color-border-primary:   #cccccc;
+  --color-border-secondary: #dedede;
+  --color-border-tertiary:  #ebebeb;
   --accent: #CC785C;
 }
 

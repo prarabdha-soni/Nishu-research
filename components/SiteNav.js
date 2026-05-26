@@ -1,77 +1,82 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 
 export default function SiteNav({ showBack = false, backLabel = 'All Research', backHref = '/' }) {
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 8)
-    window.addEventListener('scroll', handler, { passive: true })
-    return () => window.removeEventListener('scroll', handler)
-  }, [])
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-200 ${
-        scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-stone-200'
-          : 'bg-white border-b border-stone-200'
-      }`}
-    >
-      <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
+    <header className="bg-white sticky top-0 z-50 border-b-[3px] border-gray-900">
+      <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between gap-4">
 
-        {/* Left: back button OR brand */}
-        {showBack ? (
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+            <circle cx="15" cy="15" r="14" fill="#1a1a1a" />
+            <circle cx="15" cy="15" r="8" fill="none" stroke="white" strokeWidth="1.8" />
+            <circle cx="15" cy="15" r="3.5" fill="white" />
+          </svg>
+          <span className="font-black text-[17px] text-gray-900 tracking-tight leading-none">
+            Bharat<span style={{ color: '#CC785C' }}>.</span>Pulse
+          </span>
+        </Link>
+
+        {/* Back link (article pages) */}
+        {showBack && (
           <Link
             href={backHref}
-            className="flex items-center gap-1.5 text-stone-500 hover:text-stone-900 text-sm font-medium transition-colors duration-150 group"
+            className="hidden sm:flex items-center gap-1.5 text-gray-500 hover:text-gray-900 text-sm font-medium transition-colors"
           >
-            <svg
-              width="16" height="16" viewBox="0 0 16 16" fill="none"
-              className="group-hover:-translate-x-0.5 transition-transform duration-150"
-            >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {backLabel}
           </Link>
-        ) : (
-          <Link
-            href="/"
-            className="font-bold text-[17px] tracking-[-0.02em] text-stone-900 hover:text-stone-700 transition-colors duration-150"
-          >
-            Bharat<span className="text-[#CC785C]">.</span>Pulse
-          </Link>
         )}
 
-        {/* Center brand (only when back button is shown) */}
-        {showBack && (
-          <Link
-            href="/"
-            className="absolute left-1/2 -translate-x-1/2 font-bold text-[16px] tracking-[-0.02em] text-stone-900 hover:text-stone-700 transition-colors duration-150 hidden sm:block"
-          >
-            Bharat<span className="text-[#CC785C]">.</span>Pulse
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-3 ml-auto">
+          <Link href="/pipeline" className="text-gray-600 hover:text-gray-900 text-[13px] font-semibold transition-colors uppercase tracking-wide">
+            Pipeline
           </Link>
-        )}
-
-        {/* Right: nav links + subscribe */}
-        <div className="flex items-center gap-2">
-          {!showBack && (
-            <Link
-              href="/pipeline"
-              className="text-stone-500 hover:text-stone-900 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-all duration-150"
-            >
-              Pipeline
-            </Link>
-          )}
           <a
             href="mailto:research@bharatpulse.in?subject=Subscribe%20me"
-            className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-[#CC785C] text-white hover:bg-[#b86a50] transition-colors duration-150"
+            className="text-[12px] font-bold px-4 py-2 uppercase tracking-widest bg-gray-900 text-white hover:bg-gray-700 transition-colors"
           >
             Subscribe
           </a>
-        </div>
+        </nav>
+
+        {/* Mobile hamburger */}
+        <button
+          className="md:hidden ml-auto p-1"
+          onClick={() => setMenuOpen(o => !o)}
+          aria-label="Toggle menu"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            {menuOpen ? (
+              <path d="M6 6l12 12M6 18L18 6" stroke="#1a1a1a" strokeWidth="2.2" strokeLinecap="round"/>
+            ) : (
+              <path d="M3 6h18M3 12h18M3 18h18" stroke="#1a1a1a" strokeWidth="2.2" strokeLinecap="round"/>
+            )}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile dropdown */}
+      {menuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-200">
+          <div className="max-w-[1200px] mx-auto px-4 py-4 flex flex-col gap-3">
+            <Link href="/pipeline" onClick={() => setMenuOpen(false)} className="text-gray-700 text-sm font-semibold uppercase tracking-wide py-1">Pipeline</Link>
+            <a
+              href="mailto:research@bharatpulse.in?subject=Subscribe%20me"
+              className="bg-gray-900 text-white text-[12px] font-bold px-4 py-2.5 uppercase tracking-widest text-center"
+            >
+              Subscribe
+            </a>
+          </div>
+        </div>
+      )}
     </header>
   )
 }
