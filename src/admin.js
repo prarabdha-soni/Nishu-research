@@ -65,9 +65,12 @@ async function apiDelete(id) {
 async function apiGetPublished() {
   try {
     const r = await fetch('/api/articles?limit=100')
-    if (r.ok) { const d = await r.json(); return d.articles }
-  } catch {}
-  return null
+    if (r.ok) { const d = await r.json(); return d.articles || [] }
+    const err = await r.json().catch(() => ({}))
+    return { error: `API ${r.status}: ${err.error || r.statusText}` }
+  } catch (e) {
+    return { error: 'Network error — ' + e.message }
+  }
 }
 
 // ── Block templates ───────────────────────────────────────────
@@ -449,11 +452,13 @@ async function openDraftsModal() {
   draftsList.innerHTML = '<p class="drafts-empty" style="padding:24px">Loading…</p>'
   draftsModal.style.display = 'flex'
 
-  const drafts    = getDrafts()
-  const apiPub    = await apiGetPublished()
+  const drafts   = getDrafts()
+  const result   = await apiGetPublished()
+  const apiError = result && result.error ? result.error : null
+  const apiPub   = apiError ? [] : (result || [])
   const localPub  = getLocalPublished()
-  const localOnly = localPub.filter(a => !apiPub || !apiPub.some(p => p.id === a.id))
-  const published = [...(apiPub || []), ...localOnly]
+  const localOnly = localPub.filter(a => !apiPub.some(p => p.id === a.id))
+  const published = [...apiPub, ...localOnly]
 
   function row(art, source) {
     const badge = source === 'db'
@@ -479,7 +484,10 @@ async function openDraftsModal() {
     ...localOnly.map(a => row(a, 'local')),
     ...drafts.map(a => row(a, 'draft')),
   ]
-  draftsList.innerHTML = rows.length ? rows.join('') : '<p class="drafts-empty">No saved drafts or published articles yet.</p>'
+  const errorBanner = apiError
+    ? `<p class="drafts-empty" style="color:#e05252;padding:12px 24px 4px">⚠ Could not reach API: ${apiError}</p>`
+    : ''
+  draftsList.innerHTML = errorBanner + (rows.length ? rows.join('') : '<p class="drafts-empty">No saved articles yet. Publish your first article using the form.</p>')
 
   const all = [...published, ...drafts]
   draftsList.querySelectorAll('[data-load]').forEach(btn => {
