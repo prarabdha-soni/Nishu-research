@@ -1,4 +1,4 @@
-import { connectDB, Article } from './_db.js'
+import { connectDB, Article } from '../_db.js'
 
 export default async function handler(req, res) {
   try { await connectDB() } catch (e) {
