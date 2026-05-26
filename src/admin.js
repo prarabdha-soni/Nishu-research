@@ -56,8 +56,10 @@ async function apiPublish(art) {
 async function apiDelete(id) {
   try {
     const r = await fetch(`/api/articles/${id}`, { method: 'DELETE', headers: authHeaders() })
-    return r.ok
-  } catch { return false }
+    if (r.status === 401) { showToast('Delete failed — wrong or missing API key'); return false }
+    if (!r.ok) { showToast(`Delete failed — server error ${r.status}`); return false }
+    return true
+  } catch { showToast('Delete failed — network error'); return false }
 }
 
 async function apiGetPublished() {
@@ -453,12 +455,12 @@ async function openDraftsModal() {
   const localOnly = localPub.filter(a => !apiPub || !apiPub.some(p => p.id === a.id))
   const published = [...(apiPub || []), ...localOnly]
 
-  function row(art, status, source) {
+  function row(art, source) {
     const badge = source === 'db'
-      ? `<span class="draft-status draft-status--published" title="In MongoDB">published</span>`
+      ? `<span class="draft-status draft-status--published">published</span>`
       : source === 'local'
-      ? `<span class="draft-status draft-status--published" title="Local only — API key needed to sync">local</span>`
-      : `<span class="draft-status draft-status--${status}">${status}</span>`
+      ? `<span class="draft-status draft-status--published" title="Local only">local</span>`
+      : `<span class="draft-status draft-status--draft">draft</span>`
     return `<div class="draft-row">
       <div class="draft-row-info">
         ${badge}
@@ -467,15 +469,15 @@ async function openDraftsModal() {
       </div>
       <div class="draft-row-actions">
         <button class="btn-ghost btn-sm" data-load="${art.id}">Edit</button>
-        <button class="btn-ghost btn-sm btn-danger" data-delete="${art.id}" data-from="${status}">Delete</button>
+        <button class="btn-ghost btn-sm btn-danger" data-delete="${art.id}" data-source="${source}">Delete</button>
       </div>
     </div>`
   }
 
   const rows = [
-    ...(apiPub || []).map(a => row(a, 'published', 'db')),
-    ...localOnly.map(a => row(a, 'published', 'local')),
-    ...drafts.map(a => row(a, 'draft', 'local')),
+    ...(apiPub || []).map(a => row(a, 'db')),
+    ...localOnly.map(a => row(a, 'local')),
+    ...drafts.map(a => row(a, 'draft')),
   ]
   draftsList.innerHTML = rows.length ? rows.join('') : '<p class="drafts-empty">No saved drafts or published articles yet.</p>'
 
@@ -486,9 +488,21 @@ async function openDraftsModal() {
   draftsList.querySelectorAll('[data-delete]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!confirm('Delete this article?')) return
-      const aid = btn.dataset.delete
-      if (btn.dataset.from === 'published') {
-        await apiDelete(aid)
+      const aid    = btn.dataset.delete
+      const source = btn.dataset.source
+      btn.disabled = true
+      btn.textContent = 'Deleting…'
+
+      if (source === 'db') {
+        const ok = await apiDelete(aid)
+        if (!ok) {
+          showToast('Delete failed — check your API key in Settings')
+          btn.disabled = false
+          btn.textContent = 'Delete'
+          return
+        }
+        saveLocalPublished(getLocalPublished().filter(a => a.id !== aid))
+      } else if (source === 'local') {
         saveLocalPublished(getLocalPublished().filter(a => a.id !== aid))
       } else {
         saveDrafts(getDrafts().filter(a => a.id !== aid))
