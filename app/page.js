@@ -45,7 +45,7 @@ function ArticleCard({ article, featured = false }) {
         {article.category && (
           <span
             className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5"
-            style={{ color: '#CC785C' }}
+            style={{ color: '#f97316' }}
           >
             {article.category}
           </span>

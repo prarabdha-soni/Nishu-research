@@ -77,12 +77,12 @@ export default async function ArticlePage({ params }) {
         <div className="flex items-center gap-2 text-[11.5px] text-stone-400 mb-6">
           <Link href="/" className="hover:text-stone-700 transition-colors duration-150">Home</Link>
           <span>/</span>
-          <span className="text-[#CC785C] font-medium">{article.category}</span>
+          <span className="text-[#f97316] font-medium">{article.category}</span>
         </div>
 
         {/* Issue line */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#CC785C]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
           <span className="text-[10.5px] font-semibold tracking-[0.18em] uppercase text-stone-400">
             {article.category} &mdash; Issue No.&thinsp;{String(article.issue || '01').padStart(2, '0')}
           </span>
@@ -98,7 +98,7 @@ export default async function ArticlePage({ params }) {
 
         {/* Byline */}
         <div className="flex items-center gap-4 py-5 border-t border-b border-stone-200 mb-8">
-          <div className="w-9 h-9 rounded-full bg-[#CC785C] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+          <div className="w-9 h-9 rounded-full bg-[#f97316] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
             {article.author?.[0]}
           </div>
           <div className="flex-1 min-w-0">
@@ -133,12 +133,12 @@ export default async function ArticlePage({ params }) {
       {/* Author bio */}
       <div className="max-w-3xl mx-auto px-6 mt-12">
         <div className="flex gap-5 items-start p-6 bg-white rounded-2xl border border-stone-200">
-          <div className="w-12 h-12 rounded-full bg-[#CC785C] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-[#f97316] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
             {article.author?.[0]}
           </div>
           <div>
             <div className="font-semibold text-stone-900 text-[15px] mb-0.5">{article.author}</div>
-            <div className="text-[11.5px] text-[#CC785C] font-medium mb-2">Analyst, Bharat Pulse</div>
+            <div className="text-[11.5px] text-[#f97316] font-medium mb-2">Analyst, Bharat Pulse</div>
             <p className="text-stone-500 text-[13.5px] font-light leading-relaxed">
               Independent equity analyst focused on India and emerging markets.
               Writes long-horizon, data-driven research on structural growth stories
@@ -157,7 +157,7 @@ export default async function ArticlePage({ params }) {
             {nextArticle ? (
               <Link
                 href={`/article/${nextArticle.id}`}
-                className="group flex flex-col gap-1.5 p-5 bg-white border border-stone-200 rounded-xl hover:border-[#CC785C]/40 hover:bg-stone-50 transition-all duration-150"
+                className="group flex flex-col gap-1.5 p-5 bg-white border border-stone-200 rounded-xl hover:border-[#f97316]/40 hover:bg-stone-50 transition-all duration-150"
               >
                 <div className="flex items-center gap-1.5 text-stone-400 text-[11px] font-medium">
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="group-hover:-translate-x-0.5 transition-transform duration-150">
@@ -165,7 +165,7 @@ export default async function ArticlePage({ params }) {
                   </svg>
                   Previous
                 </div>
-                <span className="text-stone-700 text-[14px] font-medium leading-snug tracking-tight line-clamp-2 group-hover:text-[#CC785C] transition-colors duration-150">
+                <span className="text-stone-700 text-[14px] font-medium leading-snug tracking-tight line-clamp-2 group-hover:text-[#f97316] transition-colors duration-150">
                   {nextArticle.title}
                 </span>
                 <span className="text-[11px] text-stone-400">{nextArticle.category}</span>
@@ -176,7 +176,7 @@ export default async function ArticlePage({ params }) {
             {prevArticle ? (
               <Link
                 href={`/article/${prevArticle.id}`}
-                className="group flex flex-col gap-1.5 p-5 bg-white border border-stone-200 rounded-xl hover:border-[#CC785C]/40 hover:bg-stone-50 transition-all duration-150 sm:text-right"
+                className="group flex flex-col gap-1.5 p-5 bg-white border border-stone-200 rounded-xl hover:border-[#f97316]/40 hover:bg-stone-50 transition-all duration-150 sm:text-right"
               >
                 <div className="flex items-center gap-1.5 text-stone-400 text-[11px] font-medium sm:justify-end">
                   Next
@@ -184,7 +184,7 @@ export default async function ArticlePage({ params }) {
                     <path d="M3 8h10M8.5 4l4.5 4-4.5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <span className="text-stone-700 text-[14px] font-medium leading-snug tracking-tight line-clamp-2 group-hover:text-[#CC785C] transition-colors duration-150">
+                <span className="text-stone-700 text-[14px] font-medium leading-snug tracking-tight line-clamp-2 group-hover:text-[#f97316] transition-colors duration-150">
                   {prevArticle.title}
                 </span>
                 <span className="text-[11px] text-stone-400">{prevArticle.category}</span>
